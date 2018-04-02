@@ -1310,7 +1310,11 @@ void IntTools_FaceFace::MakeCurve(const Standard_Integer Index,
                                       mbspc.Knots(),
                                       mbspc.Multiplicities(),
                                       mbspc.Degree());
-              GeomLib_CheckBSplineCurve Check(BS,TOLCHECK,TOLANGCHECK);
+              GeomLib_CheckBSplineCurve Check(BS,TOLCHECK,TOLANGCHECK,
+                                              WL->Point(1).Value(),
+                                              WL->Point(2).Value(),
+                                              WL->Point(WL->NbPnts()-1).Value(),
+                                              WL->Point(WL->NbPnts()).Value());
               Check.FixTangent(Standard_True, Standard_True);
               //         
               IntTools_Curve aCurve;
@@ -1322,7 +1326,11 @@ void IntTools_FaceFace::MakeCurve(const Standard_Integer Index,
                                           mbspc.Knots(),
                                           mbspc.Multiplicities(),
                                           mbspc.Degree());
-                GeomLib_Check2dBSplineCurve Check1(BS1,TOLCHECK,TOLANGCHECK);
+                GeomLib_Check2dBSplineCurve Check1(BS1,TOLCHECK,TOLANGCHECK,
+                                                   WL->Point(1).ValueOnSurface(Standard_True),
+                                                   WL->Point(2).ValueOnSurface(Standard_True),
+                                                   WL->Point(WL->NbPnts()-1).ValueOnSurface(Standard_True),
+                                                   WL->Point(WL->NbPnts()).ValueOnSurface(Standard_True));
                 Check1.FixTangent(Standard_True,Standard_True);
                 //
                 // ############################################
@@ -1344,7 +1352,11 @@ void IntTools_FaceFace::MakeCurve(const Standard_Integer Index,
                                                                           mbspc.Knots(),
                                                                           mbspc.Multiplicities(),
                                                                           mbspc.Degree());
-                GeomLib_Check2dBSplineCurve newCheck(BS2,TOLCHECK,TOLANGCHECK);
+                GeomLib_Check2dBSplineCurve newCheck(BS2,TOLCHECK,TOLANGCHECK,
+                                                     WL->Point(1).ValueOnSurface(Standard_False),
+                                                     WL->Point(2).ValueOnSurface(Standard_False),
+                                                     WL->Point(WL->NbPnts()-1).ValueOnSurface(Standard_False),
+                                                     WL->Point(WL->NbPnts()).ValueOnSurface(Standard_False));
                 newCheck.FixTangent(Standard_True,Standard_True);
                 
                 // ###########################################
@@ -1389,7 +1401,11 @@ void IntTools_FaceFace::MakeCurve(const Standard_Integer Index,
                                                                  mbspc.Knots(),
                                                                  mbspc.Multiplicities(),
                                                                  mbspc.Degree());
-              GeomLib_CheckBSplineCurve Check(BS,TOLCHECK,TOLANGCHECK);
+              GeomLib_CheckBSplineCurve Check(BS,TOLCHECK,TOLANGCHECK,
+                                              WL->Point(1).Value(),
+                                              WL->Point(2).Value(),
+                                              WL->Point(WL->NbPnts()-1).Value(),
+                                              WL->Point(WL->NbPnts()).Value());
               Check.FixTangent(Standard_True,Standard_True);
               //         
               IntTools_Curve aCurve;
@@ -1401,7 +1417,11 @@ void IntTools_FaceFace::MakeCurve(const Standard_Integer Index,
                                                                         mbspc.Knots(),
                                                                         mbspc.Multiplicities(),
                                                                         mbspc.Degree());
-                GeomLib_Check2dBSplineCurve Check1(BS1,TOLCHECK,TOLANGCHECK);
+                GeomLib_Check2dBSplineCurve Check1(BS1,TOLCHECK,TOLANGCHECK,
+                                                   WL->Point(1).ValueOnSurface(Standard_True),
+                                                   WL->Point(2).ValueOnSurface(Standard_True),
+                                                   WL->Point(WL->NbPnts()-1).ValueOnSurface(Standard_True),
+                                                   WL->Point(WL->NbPnts()).ValueOnSurface(Standard_True));
                 Check1.FixTangent(Standard_True,Standard_True);
                 //         
                 // ###########################################
@@ -1423,7 +1443,11 @@ void IntTools_FaceFace::MakeCurve(const Standard_Integer Index,
                                                                         mbspc.Knots(),
                                                                         mbspc.Multiplicities(),
                                                                         mbspc.Degree());
-                GeomLib_Check2dBSplineCurve Check2(BS2,TOLCHECK,TOLANGCHECK);
+                GeomLib_Check2dBSplineCurve Check2(BS2,TOLCHECK,TOLANGCHECK,
+                                                   WL->Point(1).ValueOnSurface(Standard_False),
+                                                   WL->Point(2).ValueOnSurface(Standard_False),
+                                                   WL->Point(WL->NbPnts()-1).ValueOnSurface(Standard_False),
+                                                   WL->Point(WL->NbPnts()).ValueOnSurface(Standard_False));
                 Check2.FixTangent(Standard_True,Standard_True);
                 //
                 // ###########################################
@@ -1487,7 +1511,11 @@ void IntTools_FaceFace::MakeCurve(const Standard_Integer Index,
                                                                  mbspc.Knots(),
                                                                  mbspc.Multiplicities(),
                                                                  mbspc.Degree());
-              GeomLib_CheckBSplineCurve Check(BS,TOLCHECK,TOLANGCHECK);
+              GeomLib_CheckBSplineCurve Check(BS,TOLCHECK,TOLANGCHECK,
+                                              WL->Point(1).Value(),
+                                              WL->Point(2).Value(),
+                                              WL->Point(WL->NbPnts()-1).Value(),
+                                              WL->Point(WL->NbPnts()).Value());
               Check.FixTangent(Standard_True,Standard_True);
               //
               aCurve.SetCurve(BS);
@@ -1503,7 +1531,11 @@ void IntTools_FaceFace::MakeCurve(const Standard_Integer Index,
                                               mbspc.Knots(),
                                               mbspc.Multiplicities(),
                                               mbspc.Degree());
-                  GeomLib_Check2dBSplineCurve newCheck(BS1,TOLCHECK,TOLANGCHECK);
+                  GeomLib_Check2dBSplineCurve newCheck(BS1,TOLCHECK,TOLANGCHECK,
+                                                       WL->Point(1).ValueOnSurface(Standard_True),
+                                                       WL->Point(2).ValueOnSurface(Standard_True),
+                                                       WL->Point(WL->NbPnts()-1).ValueOnSurface(Standard_True),
+                                                       WL->Point(WL->NbPnts()).ValueOnSurface(Standard_True));
                   newCheck.FixTangent(Standard_True,Standard_True);
                   //         
                   if (!reApprox) {
@@ -1535,7 +1567,11 @@ void IntTools_FaceFace::MakeCurve(const Standard_Integer Index,
                                                                         mbspc.Knots(),
                                                                         mbspc.Multiplicities(),
                                                                         mbspc.Degree());
-                  GeomLib_Check2dBSplineCurve newCheck(BS2,TOLCHECK,TOLANGCHECK);
+                  GeomLib_Check2dBSplineCurve newCheck(BS2,TOLCHECK,TOLANGCHECK,
+                                                       WL->Point(1).ValueOnSurface(Standard_False),
+                                                       WL->Point(2).ValueOnSurface(Standard_False),
+                                                       WL->Point(WL->NbPnts()-1).ValueOnSurface(Standard_False),
+                                                       WL->Point(WL->NbPnts()).ValueOnSurface(Standard_False));
                   newCheck.FixTangent(Standard_True,Standard_True);
                 //                 
                   if (!reApprox) {

@@ -716,7 +716,11 @@ void GeomInt_IntSS::MakeCurve(const Standard_Integer Index,
                 mbspc.Knots(),
                 mbspc.Multiplicities(),
                 mbspc.Degree());
-              GeomLib_CheckBSplineCurve Check(BS,myTolCheck,myTolAngCheck);
+              GeomLib_CheckBSplineCurve Check(BS,myTolCheck,myTolAngCheck,
+                                              WL->Point(1).Value(),
+                                              WL->Point(2).Value(),
+                                              WL->Point(WL->NbPnts()-1).Value(),
+                                              WL->Point(WL->NbPnts()).Value());
               Check.FixTangent(Standard_True, Standard_True);
               // 	
               sline.Append(BS);
@@ -727,7 +731,11 @@ void GeomInt_IntSS::MakeCurve(const Standard_Integer Index,
                   mbspc.Knots(),
                   mbspc.Multiplicities(),
                   mbspc.Degree());
-                GeomLib_Check2dBSplineCurve Check1(BS1,myTolCheck,myTolAngCheck);
+                GeomLib_Check2dBSplineCurve Check1(BS1,myTolCheck,myTolAngCheck,
+                                                   WL->Point(1).ValueOnSurface(Standard_True),
+                                                   WL->Point(2).ValueOnSurface(Standard_True),
+                                                   WL->Point(WL->NbPnts()-1).ValueOnSurface(Standard_True),
+                                                   WL->Point(WL->NbPnts()).ValueOnSurface(Standard_True));
                 Check1.FixTangent(Standard_True,Standard_True);
                 // 	
                 AdjustUPeriodic (aS1, BS1);  
@@ -745,7 +753,11 @@ void GeomInt_IntSS::MakeCurve(const Standard_Integer Index,
                   mbspc.Knots(),
                   mbspc.Multiplicities(),
                   mbspc.Degree());
-                GeomLib_Check2dBSplineCurve newCheck(BS2,myTolCheck,myTolAngCheck);
+                GeomLib_Check2dBSplineCurve newCheck(BS2,myTolCheck,myTolAngCheck,
+                                                     WL->Point(1).ValueOnSurface(Standard_False),
+                                                     WL->Point(2).ValueOnSurface(Standard_False),
+                                                     WL->Point(WL->NbPnts()-1).ValueOnSurface(Standard_False),
+                                                     WL->Point(WL->NbPnts()).ValueOnSurface(Standard_False));
                 newCheck.FixTangent(Standard_True,Standard_True);
                 //
                 AdjustUPeriodic (aS2, BS2);  
@@ -779,7 +791,11 @@ void GeomInt_IntSS::MakeCurve(const Standard_Integer Index,
                 mbspc.Knots(),
                 mbspc.Multiplicities(),
                 mbspc.Degree());
-              GeomLib_CheckBSplineCurve Check(BS,myTolCheck,myTolAngCheck);
+              GeomLib_CheckBSplineCurve Check(BS,myTolCheck,myTolAngCheck,
+                                              WL->Point(1).Value(),
+                                              WL->Point(2).Value(),
+                                              WL->Point(WL->NbPnts()-1).Value(),
+                                              WL->Point(WL->NbPnts()).Value());
               Check.FixTangent(Standard_True,Standard_True);
               // 	
               sline.Append(BS);
@@ -789,7 +805,11 @@ void GeomInt_IntSS::MakeCurve(const Standard_Integer Index,
                   mbspc.Knots(),
                   mbspc.Multiplicities(),
                   mbspc.Degree());
-                GeomLib_Check2dBSplineCurve Check1(BS1,myTolCheck,myTolAngCheck);
+                GeomLib_Check2dBSplineCurve Check1(BS1,myTolCheck,myTolAngCheck,
+                                                   WL->Point(1).ValueOnSurface(Standard_True),
+                                                   WL->Point(2).ValueOnSurface(Standard_True),
+                                                   WL->Point(WL->NbPnts()-1).ValueOnSurface(Standard_True),
+                                                   WL->Point(WL->NbPnts()).ValueOnSurface(Standard_True));
                 Check1.FixTangent(Standard_True,Standard_True);
                 //
                 //
@@ -807,7 +827,11 @@ void GeomInt_IntSS::MakeCurve(const Standard_Integer Index,
                   mbspc.Knots(),
                   mbspc.Multiplicities(),
                   mbspc.Degree());
-                GeomLib_Check2dBSplineCurve Check2(BS2,myTolCheck,myTolAngCheck);
+                GeomLib_Check2dBSplineCurve Check2(BS2,myTolCheck,myTolAngCheck,
+                                                   WL->Point(1).ValueOnSurface(Standard_False),
+                                                   WL->Point(2).ValueOnSurface(Standard_False),
+                                                   WL->Point(WL->NbPnts()-1).ValueOnSurface(Standard_False),
+                                                   WL->Point(WL->NbPnts()).ValueOnSurface(Standard_False));
                 Check2.FixTangent(Standard_True,Standard_True);
                 // 
                 //
@@ -829,7 +853,11 @@ void GeomInt_IntSS::MakeCurve(const Standard_Integer Index,
                 mbspc.Knots(),
                 mbspc.Multiplicities(),
                 mbspc.Degree());
-              GeomLib_CheckBSplineCurve Check(BS,myTolCheck,myTolAngCheck);
+              GeomLib_CheckBSplineCurve Check(BS,myTolCheck,myTolAngCheck,
+                                              WL->Point(1).Value(),
+                                              WL->Point(2).Value(),
+                                              WL->Point(WL->NbPnts()-1).Value(),
+                                              WL->Point(WL->NbPnts()).Value());
               Check.FixTangent(Standard_True,Standard_True);
               // 	
               //Check IsClosed()
@@ -859,7 +887,11 @@ void GeomInt_IntSS::MakeCurve(const Standard_Integer Index,
                   mbspc.Knots(),
                   mbspc.Multiplicities(),
                   mbspc.Degree());
-                GeomLib_Check2dBSplineCurve newCheck(BS1,myTolCheck,myTolAngCheck);
+                GeomLib_Check2dBSplineCurve newCheck(BS1,myTolCheck,myTolAngCheck,
+                                                     WL->Point(1).ValueOnSurface(Standard_True),
+                                                     WL->Point(2).ValueOnSurface(Standard_True),
+                                                     WL->Point(WL->NbPnts()-1).ValueOnSurface(Standard_True),
+                                                     WL->Point(WL->NbPnts()).ValueOnSurface(Standard_True));
                 newCheck.FixTangent(Standard_True,Standard_True);
                 //
                 AdjustUPeriodic (aS1, BS1);  
@@ -876,7 +908,11 @@ void GeomInt_IntSS::MakeCurve(const Standard_Integer Index,
                   mbspc.Knots(),
                   mbspc.Multiplicities(),
                   mbspc.Degree());
-                GeomLib_Check2dBSplineCurve newCheck(BS2,myTolCheck,myTolAngCheck);
+                GeomLib_Check2dBSplineCurve newCheck(BS2,myTolCheck,myTolAngCheck,
+                                                     WL->Point(1).ValueOnSurface(Standard_False),
+                                                     WL->Point(2).ValueOnSurface(Standard_False),
+                                                     WL->Point(WL->NbPnts()-1).ValueOnSurface(Standard_False),
+                                                     WL->Point(WL->NbPnts()).ValueOnSurface(Standard_False));
                 newCheck.FixTangent(Standard_True,Standard_True);
                 //
                 AdjustUPeriodic (aS2, BS2);  
