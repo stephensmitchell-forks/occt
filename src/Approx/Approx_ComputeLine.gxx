@@ -133,6 +133,8 @@ static Standard_Boolean CheckMultiCurve(const AppParCurves_MultiCurve& theMultiC
 {
   const Standard_Integer nbp3d = LineTool::NbP3d(theLine);
   const Standard_Integer nbp2d = LineTool::NbP2d(theLine);
+
+  const Standard_Real coeff = 9.; //3*3
   
   if (nbp3d > 1) //only simple cases are analysed
     return Standard_True;
@@ -252,6 +254,7 @@ static Standard_Boolean CheckMultiCurve(const AppParCurves_MultiCurve& theMultiC
     {
       //search <indbad>
       Standard_Real MaxSqDist = 0.;
+      Standard_Real MinSqDist = RealLast();
       for (Standard_Integer k = theIndfirst+1; k <= theIndlast; k++)
       {
         LineTool::Value(theLine, k-1, tabP);
@@ -264,24 +267,31 @@ static Standard_Boolean CheckMultiCurve(const AppParCurves_MultiCurve& theMultiC
           MaxSqDist = aSqDist;
           indbads[1] = k;
         }
+        if (aSqDist > gp::Resolution() &&
+            aSqDist < MinSqDist)
+          MinSqDist = aSqDist;
       }
-      for (Standard_Integer indcur = 2; indcur <= NbCur; indcur++)
-      {
-        MaxSqDist = 0.;
-        for (Standard_Integer k = theIndfirst+1; k <= theIndlast; k++)
+      Standard_Real Relation = MaxSqDist / MinSqDist;
+      if (Relation < coeff)
+        LoopFound = Standard_False;
+      else
+        for (Standard_Integer indcur = 2; indcur <= NbCur; indcur++)
         {
-          LineTool::Value(theLine, k-1, tabP2d);
-          gp_Pnt2d PrevPnt = tabP2d(indcur-1);
-          LineTool::Value(theLine, k, tabP2d);
-          gp_Pnt2d CurPnt  = tabP2d(indcur-1);
-          Standard_Real aSqDist = PrevPnt.SquareDistance(CurPnt);
-          if (aSqDist > MaxSqDist)
+          MaxSqDist = 0.;
+          for (Standard_Integer k = theIndfirst+1; k <= theIndlast; k++)
           {
-            MaxSqDist = aSqDist;
-            indbads[indcur] = k;
+            LineTool::Value(theLine, k-1, tabP2d);
+            gp_Pnt2d PrevPnt = tabP2d(indcur-1);
+            LineTool::Value(theLine, k, tabP2d);
+            gp_Pnt2d CurPnt  = tabP2d(indcur-1);
+            Standard_Real aSqDist = PrevPnt.SquareDistance(CurPnt);
+            if (aSqDist > MaxSqDist)
+            {
+              MaxSqDist = aSqDist;
+              indbads[indcur] = k;
+            }
           }
         }
-      }
     }
   } //if (myNbP3d == 1)
   else //2d case
@@ -363,6 +373,7 @@ static Standard_Boolean CheckMultiCurve(const AppParCurves_MultiCurve& theMultiC
       for (Standard_Integer indcur = 1; indcur <= NbCur; indcur++)
       {
         Standard_Real MaxSqDist = 0.;
+        Standard_Real MinSqDist = RealLast();
         for (Standard_Integer k = theIndfirst+1; k <= theIndlast; k++)
         {
           LineTool::Value(theLine, k-1, tabP2d);
@@ -375,21 +386,27 @@ static Standard_Boolean CheckMultiCurve(const AppParCurves_MultiCurve& theMultiC
             MaxSqDist = aSqDist;
             indbads[indcur] = k;
           }
+          if (aSqDist > gp::Resolution() &&
+              aSqDist < MinSqDist)
+            MinSqDist = aSqDist;
         }
+        Standard_Real Relation = MaxSqDist / MinSqDist;
+        if (Relation < coeff)
+          LoopFound = Standard_False;
       }
     }
   }
 
   //Define <indbad>
-  if (indbads[1] != 0 && indbads[2] != 0)
-  {
-    if (indbads[1] != indbads[2])
-      LoopFound = Standard_False;
-    else if (indbads[3] != 0 && indbads[1] != indbads[3])
-      LoopFound = Standard_False;
-  }
-  if (LoopFound)
-    theIndbad = indbads[1];
+  for (Standard_Integer i = 1; i <= 3; i++)
+    if (indbads[i] != 0)
+    {
+      theIndbad = indbads[i];
+      break;
+    }
+
+  if (!LoopFound)
+    theIndbad = 0;
   
   return (!LoopFound);
 }
@@ -1328,18 +1345,27 @@ Standard_Boolean Approx_ComputeLine::Compute(const MultiLine& Line,
 #ifdef OCCT_DEBUG
         if (mydebug) DUMP(mySCU);
 #endif
-        myMultiCurves.Append(mySCU);
-        // Stockage des parametres de la partie de MultiLine approximee:
-        // A ameliorer !! (bq trop de recopies)
-        Handle(TColStd_HArray1OfReal) ThePar = 
-          new TColStd_HArray1OfReal(Para.Lower(), Para.Upper());
-        for (i = Para.Lower(); i <= Para.Upper(); i++) {
-          ThePar->SetValue(i, Para(i));
+        if (!CheckMultiCurve(mySCU, Line,
+                             fpt, lpt,
+                             indbad))
+        {
+          return Standard_False;
         }
-        myPar.Append(ThePar);
-        Tolers3d.Append(TheTol3d);
-        Tolers2d.Append(TheTol2d);
-        return Standard_True;
+        else
+        {
+          myMultiCurves.Append(mySCU);
+          // Stockage des parametres de la partie de MultiLine approximee:
+          // A ameliorer !! (bq trop de recopies)
+          Handle(TColStd_HArray1OfReal) ThePar = 
+            new TColStd_HArray1OfReal(Para.Lower(), Para.Upper());
+          for (i = Para.Lower(); i <= Para.Upper(); i++) {
+            ThePar->SetValue(i, Para(i));
+          }
+          myPar.Append(ThePar);
+          Tolers3d.Append(TheTol3d);
+          Tolers2d.Append(TheTol2d);
+          return Standard_True;
+        }
       }
     }
 
