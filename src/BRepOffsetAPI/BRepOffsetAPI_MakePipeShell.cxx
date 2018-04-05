@@ -32,7 +32,8 @@
 //function :
 //purpose  : 
 //=======================================================================
-BRepOffsetAPI_MakePipeShell::BRepOffsetAPI_MakePipeShell(const TopoDS_Wire& Spine)
+BRepOffsetAPI_MakePipeShell::BRepOffsetAPI_MakePipeShell(const TopoDS_Wire& Spine) :
+myCheckValidity(Standard_True)
                       
 
 {
@@ -255,10 +256,10 @@ void BRepOffsetAPI_MakePipeShell::SetMaxSegments(const Standard_Integer NewMaxSe
 //function :Build() 
 //purpose  : 
 //=======================================================================
- void BRepOffsetAPI_MakePipeShell::Build() 
+ void BRepOffsetAPI_MakePipeShell::Build()
 {
   Standard_Boolean Ok;
-  Ok = myPipe->Build();
+  Ok = myPipe->Build(myCheckValidity);
   if (Ok) {
     myShape = myPipe->Shape();
     Done();

@@ -261,7 +261,14 @@ public:
   
   Standard_EXPORT Standard_Real ErrorOnSurface() const;
 
-
+  //! If theValue == FALSE then BRepFill_Sweep algorithm
+  //! is allowed to create invalid faces (having self-interferences).
+  //! It is considered for them that such faces will be processed and
+  //! fixed by the high-level algorithms
+  void AllowCheckValidity(const Standard_Boolean theValue = Standard_True)
+  {
+    myCheckValidity = theValue;
+  }
 
 
 protected:
@@ -275,7 +282,7 @@ private:
 
 
   Handle(BRepFill_PipeShell) myPipe;
-
+  Standard_Boolean myCheckValidity;
 
 };
 

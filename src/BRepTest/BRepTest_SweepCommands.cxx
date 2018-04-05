@@ -836,7 +836,18 @@ static Standard_Integer buildsweep(Draw_Interpretor& di,
     Sweep->SetTransitionMode(Transition);
   }
   // Reading solid ?
-  if ((n>cur) && (!strcmp(a[cur],"-S")) ) mksolid = Standard_True;
+  if ((n > cur) && (!strcmp(a[cur], "-S")))
+  {
+    mksolid = Standard_True;
+    ++cur;
+  }
+
+  if ((n > cur) && (!strcmp(a[cur], "-Inv")))
+  {
+    Sweep->AllowCheckValidity(Standard_False);
+    ++cur;
+  }
+
 
   // Calcul le resultat
   Sweep->Build();
