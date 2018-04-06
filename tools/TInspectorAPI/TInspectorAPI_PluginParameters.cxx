@@ -215,7 +215,6 @@ TopLoc_Location fromString (const TCollection_AsciiString& theValue)
       break;
     aCurrentString = aValueString.Split (aPosition);
     Standard_Integer aColumn = 0;
-    Standard_Integer aFromIndex = 1;
     while (!aValueString.IsEmpty())
     {
       aPosition = aCurrentString.Search (" ");
