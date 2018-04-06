@@ -130,7 +130,9 @@ bool TreeModel_Tools::RestoreState (QTreeView* theTreeView, const QString& theKe
         aColumnIds.append (aValues.at (aValueId).toInt());
     }
     for (int aColumnId = 0; aColumnId < aColumnSize; aColumnId++)
-      theTreeView->setColumnHidden (aColumnId, aColumnIds.contains (aColumnId));
+    {
+      theTreeView->setColumnHidden (aColumnId, aColumnIds.contains(aColumnId) == true);
+    }
   }
   else
     return false;
