@@ -21,7 +21,6 @@
 #include <Standard_Version.hxx>
 #include <Standard_Transient.hxx>
 #include <TCollection_AsciiString.hxx>
-#include <TCollection_AsciiString.hxx>
 #include <TopoDS_Shape.hxx>
 
 #include <inspector/TInspectorAPI_PreferencesDataMap.hxx>

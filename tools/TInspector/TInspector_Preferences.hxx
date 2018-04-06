@@ -36,7 +36,7 @@ public:
   //! Destructor
   virtual ~TInspector_Preferences() {}
 
-  static char* PreferencesFileName() { return ".tinspector.xml"; }
+  static Standard_CString PreferencesFileName() { return ".tinspector.xml"; }
 
   //! Sets path to a preferences file
   //! \param thePath a path
@@ -74,19 +74,19 @@ private:
   void readPluginItem(const QDomElement thePluginElement, TInspectorAPI_PreferencesDataMap& theItem);
 
   //! Returns text of attribute document
-  static char* documentKey() { return "document"; }
+  static Standard_CString documentKey() { return "document"; }
 
   //! Returns text of attribute plugin
-  static char* pluginKey() { return "plugin"; }
+  static Standard_CString pluginKey() { return "plugin"; }
 
   //! Returns text of attribute parameter
-  static char* parameterKey() { return "parameter"; }
+  static Standard_CString parameterKey() { return "parameter"; }
 
   //! Returns text of attribute name
-  static char* nameKey() { return "name"; }
+  static Standard_CString nameKey() { return "name"; }
 
   //! Returns text of attribute value
-  static char* valueKey() { return "value"; }
+  static Standard_CString valueKey() { return "value"; }
 
 private:
   //! directory of preferences file

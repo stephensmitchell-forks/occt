@@ -24,7 +24,7 @@
 // =======================================================================
 QVariant VInspector_ItemFolderObject::initValue (int theItemRole) const
 {
-  if (Column() == 0 && theItemRole == Qt::DisplayRole || theItemRole == Qt::ToolTipRole)
+  if (Column() == 0 && (theItemRole == Qt::DisplayRole || theItemRole == Qt::ToolTipRole))
   {
     if (parentItemIsContext()) return "Properties";
     else if (Row() == 0) return "Filters";

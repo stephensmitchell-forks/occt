@@ -218,6 +218,9 @@ TopLoc_Location fromString (const TCollection_AsciiString& theValue)
     while (!aValueString.IsEmpty())
     {
       aPosition = aCurrentString.Search (" ");
+      if (aValueString.Length() < 2)
+        break;
+
       aValueString = aPosition > 0 ? aValueString.SubString (1, aValueString.Length() - 1)
                                    : aValueString.SubString (1, aValueString.Length());
       aValues.SetValue (aRow, aColumn, aValueString.RealValue());
@@ -269,6 +272,8 @@ void TInspectorAPI_PluginParameters::ParametersToShape (const TCollection_AsciiS
   TCollection_AsciiString anOrientationStr = theValue;
   TCollection_AsciiString aLocationStr = anOrientationStr.Split (aSeparatorPos);
   // orientation
+  if (anOrientationStr.Length() < 2)
+    return;
   anOrientationStr = anOrientationStr.SubString (1, anOrientationStr.Length()-1);
   TopAbs_Orientation anOrientation;
   if (!TopAbs::ShapeOrientationFromString (anOrientationStr.ToCString(), anOrientation))
