@@ -835,6 +835,32 @@ Standard_Integer mkvolume(Draw_Interpretor& di, Standard_Integer n, const char**
   const TopoDS_Shape& aR = aMV.Shape();
   //
   DBRep::Set(a[1], aR);
+  char aBuff[100];
+  BRep_Builder aBB;
+  TopTools_ListIteratorOfListOfShape anItrS(aLS);
+  for (i = 1; anItrS.More(); anItrS.Next(), i++)
+  {
+    Sprintf(aBuff, "%sm_%d", a[1], i);
+    const TopoDS_Shape &aS = anItrS.Value();
+    const TopTools_ListOfShape &aL = aMV.Modified(aS);
+
+    if (aL.IsEmpty())
+    {
+      di << aBuff << " is empty\n";
+      continue;
+    }
+
+    TopoDS_Compound aCM;
+    aBB.MakeCompound(aCM);
+    TopTools_ListIteratorOfListOfShape anItm(aL);
+    for (; anItm.More(); anItm.Next())
+    {
+      aBB.Add(aCM, anItm.Value());
+    }
+
+    DBRep::Set(aBuff, aCM);
+  }
+
   //
   return 0;
 }
