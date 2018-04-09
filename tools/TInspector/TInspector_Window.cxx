@@ -414,7 +414,6 @@ void TInspector_Window::OnStorePreferences()
     if (!anInfo.myCommunicator)
       continue;
 
-    TInspectorAPI_PreferencesDataMap aPreferences;
     anInfo.myCommunicator->GetPreferences (aPreferences);
     myParameters->SetPreferences (anInfo.myName, aPreferences);
   }

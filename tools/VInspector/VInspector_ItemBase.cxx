@@ -27,7 +27,7 @@ Handle(AIS_InteractiveContext) VInspector_ItemBase::GetContext() const
     return myContext;
   
   Handle(AIS_InteractiveContext) aContext;
-  if (const VInspector_ItemContext* aThisContextItem = dynamic_cast<const VInspector_ItemContext*> (this))
+  if (dynamic_cast<const VInspector_ItemContext*> (this))
   {
     return Handle(AIS_InteractiveContext)(); // context has not be set yet
   }
