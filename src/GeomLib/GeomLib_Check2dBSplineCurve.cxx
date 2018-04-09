@@ -28,8 +28,113 @@
 //purpose  : 
 //=======================================================================
 GeomLib_Check2dBSplineCurve::GeomLib_Check2dBSplineCurve(const Handle(Geom2d_BSplineCurve)& Curve,
-						     const Standard_Real Tolerance,
-						     const Standard_Real AngularTolerance)
+                                                         const Standard_Real Tolerance,
+                                                         const Standard_Real AngularTolerance,
+                                                         const gp_Pnt2d& FirstPnt,
+                                                         const gp_Pnt2d& SecondPnt,
+                                                         const gp_Pnt2d& PrelastPnt,
+                                                         const gp_Pnt2d& LastPnt)
+:myCurve(Curve),
+myDone(Standard_False),
+myFixFirstTangent(Standard_False),
+myFixLastTangent(Standard_False),
+myAngularTolerance(Abs(AngularTolerance)),
+myTolerance(Abs(Tolerance))
+{
+  const Standard_Real CrossProdTol = 1.e-6;
+  
+  myIndSecondPole = myIndPrelastPole = -1;
+  
+  Standard_Integer ii,
+    num_poles ;
+
+  num_poles = myCurve->NbPoles() ;
+  
+  if (!myCurve->IsPeriodic() && num_poles >= 4)
+  {
+    //Around first point
+    gp_Vec2d FirstVec(FirstPnt, SecondPnt), FirstNormVec;
+    Standard_Real FirstVecLength = FirstVec.Magnitude();
+    if (FirstVecLength > gp::Resolution())
+      FirstNormVec = FirstVec / FirstVecLength;
+    Standard_Boolean AreParallel = Standard_True;
+
+    for (ii = 2; ii <= num_poles-1; ii++)
+    {
+      gp_Pnt2d aPnt = myCurve->Pole(ii);
+      gp_Vec2d aVec(FirstPnt, aPnt);
+      Standard_Real ScalProd = FirstVec * aVec;
+      if (ScalProd > 0.)
+      {
+        myIndSecondPole = ii;
+        break;
+      }
+      else
+      {
+        Standard_Real aVecLength = aVec.Magnitude();
+        if (FirstVecLength > gp::Resolution() &&
+            aVecLength > gp::Resolution())
+        {
+          aVec /= aVecLength;
+          Standard_Real CrossProd = FirstNormVec ^ aVec;
+          if (Abs(CrossProd) > CrossProdTol)
+          {
+            AreParallel = Standard_False;
+            break;
+          }
+        }
+      }
+    }
+
+    if (myIndSecondPole > 2 && AreParallel)
+      myFixFirstTangent = Standard_True;
+
+    //Around last point;
+    gp_Vec2d LastVec(LastPnt, PrelastPnt), LastNormVec;
+    Standard_Real LastVecLength = LastVec.Magnitude();
+    if (LastVecLength > gp::Resolution())
+      LastNormVec = LastVec / LastVecLength;
+    AreParallel = Standard_True;
+
+    for (ii = num_poles-1; ii >= 2; ii--)
+    {
+      gp_Pnt2d aPnt = myCurve->Pole(ii);
+      gp_Vec2d aVec(LastPnt, aPnt);
+      Standard_Real ScalProd = LastVec * aVec;
+      if (ScalProd > 0.)
+      {
+        myIndPrelastPole = ii;
+        break;
+      }
+      else
+      {
+        Standard_Real aVecLength = aVec.Magnitude();
+        if (LastVecLength > gp::Resolution() &&
+            aVecLength > gp::Resolution())
+        {
+          aVec /= aVecLength;
+          Standard_Real CrossProd = LastNormVec ^ aVec;
+          if (Abs(CrossProd) > CrossProdTol)
+          {
+            AreParallel = Standard_False;
+            break;
+          }
+        }
+      }
+    }
+
+    if (myIndPrelastPole < num_poles-1 && AreParallel)
+      myFixLastTangent = Standard_True;
+  }
+}
+
+//=======================================================================
+//function : GeomLib_Check2dBSplineCurve
+//purpose  : 
+//=======================================================================
+GeomLib_Check2dBSplineCurve::GeomLib_Check2dBSplineCurve(const Handle(Geom2d_BSplineCurve)& Curve,
+                                                         const Standard_Real Tolerance,
+                                                         const Standard_Real AngularTolerance)
 :myCurve(Curve),
 myDone(Standard_False),
 myFixFirstTangent(Standard_False),
@@ -39,7 +144,7 @@ myTolerance(Abs(Tolerance)),
 myFirstPole(1.0,0.0e0),
 myLastPole(1.0e0,0.0e0)
 {
-  
+  myIndSecondPole = myIndPrelastPole = -1;
 
   Standard_Integer ii,
     num_poles ;
@@ -168,13 +273,40 @@ void GeomLib_Check2dBSplineCurve::FixTangent(const Standard_Boolean FirstFlag,
 { 
 
   if (myFixFirstTangent && FirstFlag) {
-    myCurve->SetPole(2,
-		     myFirstPole) ;
+    if (myIndSecondPole == -1)
+      myCurve->SetPole(2,
+                       myFirstPole) ;
+    else
+    {
+      gp_XY XY1 = myCurve->Pole(1).XY();
+      gp_XY XY2 = myCurve->Pole(myIndSecondPole).XY();
+      Standard_Real NbSamples = myIndSecondPole - 1;
+      for (Standard_Integer i = 2; i < myIndSecondPole; i++)
+      {
+        Standard_Real ii = i-1;
+        gp_Pnt2d aNewPole((1. - ii/NbSamples)*XY1 + ii/NbSamples*XY2);
+        myCurve->SetPole(i, aNewPole);
+      }
+    }
   }
   if (myFixLastTangent && LastFlag) {
     Standard_Integer num_poles = myCurve->NbPoles() ;
-    myCurve->SetPole(num_poles-1,
-		     myLastPole) ;
+
+    if (myIndPrelastPole == -1)
+      myCurve->SetPole(num_poles-1,
+                       myLastPole) ;
+    else
+    {
+      gp_XY XY1 = myCurve->Pole(num_poles).XY();
+      gp_XY XY2 = myCurve->Pole(myIndPrelastPole).XY();
+      Standard_Real NbSamples = num_poles - myIndPrelastPole;
+      for (Standard_Integer i = num_poles-1; i > myIndPrelastPole; i--)
+      {
+        Standard_Real ii = num_poles-i;
+        gp_Pnt2d aNewPole((1. - ii/NbSamples)*XY1 + ii/NbSamples*XY2);
+        myCurve->SetPole(i, aNewPole);
+      }
+    }
   }
   
   myDone = Standard_True ;

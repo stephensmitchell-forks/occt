@@ -1143,22 +1143,8 @@ void Approx_ComputeLine::Perform(const MultiLine& Line)
 	}
 
 	TheMultiCurve = AppParCurves_MultiCurve();
-        MultiLine anOtherLine4;
-        Standard_Boolean isOtherLine4Made = Standard_False;
         Standard_Integer indbad = 0;
 	Ok = Compute(Line, myfirstpt, mylastpt, Param, thetol3d, thetol2d, indbad);
-        if (indbad != 0)
-        {
-          isOtherLine4Made = LineTool::MakeMLOneMorePoint (Line, myfirstpt, mylastpt, indbad, anOtherLine4);
-        }
-        if (isOtherLine4Made)
-        {
-          myIsClear = Standard_True;
-          //++myMultiLineNb;
-          myNbPlusOnePoint++;
-          Perform (anOtherLine4);
-          Ok = Standard_True;
-        }
         if (myfirstpt == Thelastpt)
         {
           Finish = Standard_True;

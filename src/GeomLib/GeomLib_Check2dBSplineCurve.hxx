@@ -38,7 +38,17 @@ public:
   DEFINE_STANDARD_ALLOC
 
   
-  Standard_EXPORT GeomLib_Check2dBSplineCurve(const Handle(Geom2d_BSplineCurve)& Curve, const Standard_Real Tolerance, const Standard_Real AngularTolerance);
+  Standard_EXPORT GeomLib_Check2dBSplineCurve(const Handle(Geom2d_BSplineCurve)& Curve,
+                                              const Standard_Real Tolerance,
+                                              const Standard_Real AngularTolerance);
+  
+  Standard_EXPORT GeomLib_Check2dBSplineCurve(const Handle(Geom2d_BSplineCurve)& Curve,
+                                              const Standard_Real Tolerance,
+                                              const Standard_Real AngularTolerance,
+                                              const gp_Pnt2d& FirstPnt,
+                                              const gp_Pnt2d& SecondPnt,
+                                              const gp_Pnt2d& PrelastPnt,
+                                              const gp_Pnt2d& LastPnt);
   
     Standard_Boolean IsDone() const;
   
@@ -75,6 +85,8 @@ private:
   gp_Pnt2d myFirstPole;
   gp_Pnt2d myLastPole;
 
+  Standard_Integer myIndSecondPole;
+  Standard_Integer myIndPrelastPole;
 
 };
 
