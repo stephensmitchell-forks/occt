@@ -237,9 +237,6 @@ void TInspectorEXE_OpenFileDialog::onSelectClicked()
 
   myFileName = aFileName;
   accept();
-
-  //mySelectedName->setText (aFileName);
-  //onNameChanged (aFileName);
 }
 
 // =======================================================================
