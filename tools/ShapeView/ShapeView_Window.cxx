@@ -106,6 +106,7 @@ ShapeView_Window::ShapeView_Window (QWidget* theParent)
 
   // view
   myViewWindow = new View_Window (myMainWindow, false);
+  connect (myViewWindow, SIGNAL(eraseAllPerformed()), this, SLOT(onEraseAllPerformed()));
   aVisibilityState->SetDisplayer (myViewWindow->GetDisplayer());
   aVisibilityState->SetPresentationType (View_PresentationType_Main);
   myViewWindow->GetView()->SetPredefinedSize (SHAPEVIEW_DEFAULT_VIEW_WIDTH, SHAPEVIEW_DEFAULT_VIEW_HEIGHT);
@@ -359,6 +360,20 @@ void ShapeView_Window::onTreeViewContextMenuRequested (const QPoint& thePosition
 
   QPoint aPoint = myTreeView->mapToGlobal (thePosition);
   aMenu->exec (aPoint);
+}
+
+// =======================================================================
+// function : onEraseAllPerformed
+// purpose :
+// =======================================================================
+void ShapeView_Window::onEraseAllPerformed()
+{
+  ShapeView_TreeModel* aTreeModel = dynamic_cast<ShapeView_TreeModel*> (myTreeView->model());
+
+  // TODO: provide update for only visibility state for better performance  TopoDS_Shape myCustomShape;
+
+  aTreeModel->Reset();
+  aTreeModel->EmitLayoutChanged();
 }
 
 // =======================================================================

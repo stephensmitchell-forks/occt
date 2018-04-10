@@ -13,11 +13,12 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement. 
 
-#include <TInspectorEXE_OpenFileDialog.hxx>
-#include <TInspectorEXE_OpenFileViewModel.hxx>
+#include <inspector/TInspectorEXE_OpenFileDialog.hxx>
+#include <inspector/TInspectorEXE_OpenFileViewModel.hxx>
 
 #include <inspector/TInspector_Communicator.hxx>
 
+#include <Standard_WarningsDisable.hxx>
 #include <QApplication>
 #include <QCompleter>
 #include <QDir>
@@ -35,6 +36,7 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <Standard_WarningsRestore.hxx>
 
 const int FONT_POINT_SIZE = 18;
 const int ICON_SIZE = 40;
@@ -232,8 +234,12 @@ void TInspectorEXE_OpenFileDialog::onSelectClicked()
   if (aFileName.isEmpty())
     return; // do nothing, left the previous value
 
-  mySelectedName->setText (aFileName);
-  onNameChanged (aFileName);
+
+  myFileName = aFileName;
+  accept();
+
+  //mySelectedName->setText (aFileName);
+  //onNameChanged (aFileName);
 }
 
 // =======================================================================

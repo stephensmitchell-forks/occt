@@ -14,17 +14,19 @@
 // commercial license or contractual agreement. 
 
 
-#include <TInspectorEXE_OpenFileDialog.hxx>
+#include <inspector/TInspectorEXE_OpenFileDialog.hxx>
 
 #include <inspector/TInspector_Communicator.hxx>
 
 #include <OSD_Environment.hxx>
 
+#include <Standard_WarningsDisable.hxx>
 #include <QAction>
 #include <QApplication>
 #include <QDir>
 #include <QMainWindow>
 #include <QToolBar>
+#include <Standard_WarningsRestore.hxx>
 
 #include <set>
 
