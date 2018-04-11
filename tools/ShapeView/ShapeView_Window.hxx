@@ -108,6 +108,9 @@ protected slots:
   //! \param thePosition a clicked point
   void onTreeViewContextMenuRequested (const QPoint& thePosition);
 
+  //! Updates visibility states by erase all in context
+  void onEraseAllPerformed();
+
   //! Exports shape to BREP file and view result file
   void onBREPDirectory();
 
