@@ -2172,6 +2172,8 @@ static Standard_Integer BOSS(Draw_Interpretor& theCommands,
 
     if(V.IsNull()) return 1;
     ChFi3d_FilletShape FSh = ChFi3d_Rational;
+    if (Rakk)
+      delete Rakk;
     Rakk = new BRepFilletAPI_MakeFillet(V,FSh);
     Rakk->SetParams(ta,t3d,t2d,t3d,t2d,fl);
     Rakk->SetContinuity(blend_cont, tapp_angle);

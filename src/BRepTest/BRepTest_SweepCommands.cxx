@@ -768,11 +768,11 @@ static Standard_Integer buildsweep(Draw_Interpretor& di,
     }
     result = Sweep->Shape();
     DBRep::Set(a[1],result);
+    // Save history of sweep
+    TopTools_ListOfShape aProfiles;
+    Sweep->Profiles(aProfiles);
+    BRepTest_Objects::SetHistory(aProfiles, *Sweep);
   }
-
-  TopTools_ListOfShape aProfiles;
-  Sweep->Profiles(aProfiles);
-  BRepTest_Objects::SetHistory(aProfiles, *Sweep);
 
   return 0;
 }

@@ -7325,7 +7325,7 @@ buildevol
 
 @subsection occt_draw_defeaturing Defeaturing
 
-Draw command *removefeatures* is intended for performing @ref occt_modalg_defeaturing "3D Model Defeaturing", i.e. it performs the removal of the requested features from the shape.
+Draw command **removefeatures** is intended for performing @ref occt_modalg_defeaturing "3D Model Defeaturing", i.e. it performs the removal of the requested features from the shape.
 
 Syntax:
 ~~~~
@@ -8034,7 +8034,7 @@ Options:
 
 @subsection occt_draw_hist History commands
 
-Draw module for @ref occt_modalg_hist "History Information support" includes to commands to save history into a drawable object and the actual history commands:
+Draw module for @ref occt_modalg_hist "History Information support" includes the command to save history into a drawable object and the actual history commands:
 
 * *savehistory*;
 * *isdeleted*;
@@ -8051,7 +8051,7 @@ savehistory     : savehistory name
 ~~~~
 
 If the history of some operation is needed the *savehistory* command should be called after the command performing the operation.
-If some other operation supporting history will be performed before the history of first operation is save it will be overwritten with the new history.
+If some other operation supporting history will be performed before the history of first operation is saved it will be overwritten with the new history.
 
 Example:
 ~~~~
@@ -8102,7 +8102,7 @@ foreach s [join [list [explode b2 v] [explode b2 e] [explode b2 f] ] ] {
 
 @subsubsection occt_draw_hist_mod modified
 
-*modified* command returns the shapes Modified from the given shape in the given history.
+*modified* command returns the shapes Modified from the given shape in the given history. All modified shapes are put into compound. If the shape has not been modified the resulting compound will be empty. Note that if the shape has been modified into a single shape only, it will be returned without enclosure into compound.
 
 Syntax:
 ~~~~
@@ -8125,7 +8125,7 @@ modified m5 fillet_hist b_5
 
 @subsubsection occt_draw_hist_gen generated
 
-*generated* command returns the shapes Generated from the given shape in the given history.
+*generated* command returns the shapes Generated from the given shape in the given history. All generated shapes are put into compound. If no shapes have been generated from the shape the resulting compound will be empty. Note that if the shape has generated a single shape only, it will be returned without enclosure into compound.
 
 Syntax:
 ~~~~
@@ -8160,9 +8160,9 @@ compare g12 g22
 
 Draw History mechanism allows fast and easy enabling of the Draw history support for the OCCT algorithms supporting standard history methods.
 To enable History commands for the algorithm it is necessary to save the history of the algorithm into the session.
-For that, it is necessary to put the following code into the command performing the operation after the command is done:
+For that, it is necessary to put the following code into the command implementation just after the command is done:
 ~~~~
-BRetTest_Objects::SetHistory(ListOfArguments, Algorithm);
+BRepTest_Objects::SetHistory(ListOfArguments, Algorithm);
 ~~~~
 
 Here is the example of how it is done in the command performing Split operation (see implementation of the *bapisplit* command):

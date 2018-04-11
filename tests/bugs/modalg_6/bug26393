@@ -20,25 +20,21 @@ bbuild r
 savehistory gf_hist
 
 set bug_info [modified v0m gf_hist v0]
-set bug_info [string trim [string range $bug_info 0 [expr {[string first "\n" $bug_info] - 1}]]]
 if {$bug_info != "The shape has not been modified."} {
   puts "ERROR: OCC26393 is reproduced. Command modified does not work."
 }
 
 set bug_info [modified v1m gf_hist v1]
-set bug_info [string trim [string range $bug_info 0 [expr {[string first "\n" $bug_info] - 1}]]]
 if {$bug_info != "The shape has not been modified."} {
   puts "ERROR: OCC26393 is reproduced. Command modified does not work."
 }
 
 set bug_info [isdeleted gf_hist v0]
-set bug_info [string trim [string range $bug_info 0 [expr {[string first "\n" $bug_info] - 1}]]]
 if {$bug_info != "Not deleted."} {
   puts "ERROR: OCC26393 is reproduced. Command isdeleted does not work."
 }
 
 set bug_info [isdeleted gf_hist v1]
-set bug_info [string trim [string range $bug_info 0 [expr {[string first "\n" $bug_info] - 1}]]]
 if {$bug_info != "Not deleted."} {
   puts "ERROR: OCC26393 is reproduced. Command isdeleted does not work."
 }
@@ -51,31 +47,26 @@ if {$bug_info != ""} {
 }
 
 set bug_info [isdeleted gf_hist w_1]
-set bug_info [string trim [string range $bug_info 0 [expr {[string first "\n" $bug_info] - 1}]]]
 if {$bug_info != "Not deleted."} {
   puts "ERROR: OCC26393 is reproduced. Command isdeleted does not work."
 }
 
 set bug_info [modified w2m gf_hist w_2]
-set bug_info [string trim [string range $bug_info 0 [expr {[string first "\n" $bug_info] - 1}]]]
 if {$bug_info != "The shape has not been modified."} {
   puts "ERROR: OCC26393 is reproduced. Command modified does not work."
 }
 
 set bug_info [isdeleted gf_hist w_2]
-set bug_info [string trim [string range $bug_info 0 [expr {[string first "\n" $bug_info] - 1}]]]
 if {$bug_info != "Not deleted."} {
   puts "ERROR: OCC26393 is reproduced. Command isdeleted does not work."
 }
 
 set bug_info [modified w3m gf_hist w_3]
-set bug_info [string trim [string range $bug_info 0 [expr {[string first "\n" $bug_info] - 1}]]]
 if {$bug_info != "The shape has not been modified."} {
   puts "ERROR: OCC26393 is reproduced. Command modified does not work."
 }
 
 set bug_info [isdeleted gf_hist w_3]
-set bug_info [string trim [string range $bug_info 0 [expr {[string first "\n" $bug_info] - 1}]]]
 if {$bug_info != "Not deleted."} {
   puts "ERROR: OCC26393 is reproduced. Command isdeleted does not work."
 }
@@ -86,19 +77,16 @@ if {$bug_info != ""} {
 }
 
 set bug_info [isdeleted gf_hist w_4]
-set bug_info [string trim [string range $bug_info 0 [expr {[string first "\n" $bug_info] - 1}]]]
 if {$bug_info != "Not deleted."} {
   puts "ERROR: OCC26393 is reproduced. Command isdeleted does not work."
 }
 
 set bug_info [modified w5m gf_hist w_5]
-set bug_info [string trim [string range $bug_info 0 [expr {[string first "\n" $bug_info] - 1}]]]
 if {$bug_info != "The shape has not been modified."} {
   puts "ERROR: OCC26393 is reproduced. Command modified does not work."
 }
 
 set bug_info [isdeleted gf_hist w_5]
-set bug_info [string trim [string range $bug_info 0 [expr {[string first "\n" $bug_info] - 1}]]]
 if {$bug_info != "Not deleted."} {
   puts "ERROR: OCC26393 is reproduced. Command isdeleted does not work."
 }

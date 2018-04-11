@@ -110,7 +110,8 @@ Standard_Integer RemoveFeatures(Draw_Interpretor& theDI,
   // Check for the errors/warnings
   BOPTest::ReportAlerts(aRF.GetReport());
 
-  BRepTest_Objects::SetHistory(aRF.GetHistory());
+  if (aRF.HasHistory())
+    BRepTest_Objects::SetHistory(aRF.GetHistory());
 
   if (aRF.HasErrors())
     return 0;

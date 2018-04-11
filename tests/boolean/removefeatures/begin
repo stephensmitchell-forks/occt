@@ -5,7 +5,7 @@ proc CheckIsFeatureRemoved {theFeature types} {
   foreach t $types {
     foreach s [explode TheFeatureC $t] {
       set log [isdeleted rf_hist $s]
-      if {$log != "Deleted.\n"} {
+      if {$log != "Deleted."} {
         puts "Error: Feature is not removed"
       }
     }

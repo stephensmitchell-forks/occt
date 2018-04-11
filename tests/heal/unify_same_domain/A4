@@ -17,7 +17,6 @@ unifysamedom result a a_3 a_1_3 a_1_4
 savehistory usd_hist
 
 set bug_info [modified res usd_hist a_9]
-set bug_info [string trim [string range $bug_info 0 [expr {[string first "\n" $bug_info] - 1}]]]
 if {$bug_info != "The shape has not been modified."} {
   puts "ERROR: OCC28226 is reproduced. Command modified does not work correctly."
 }
@@ -33,43 +32,36 @@ if {$bug_info != ""} {
 }
 
 set bug_info [modified res usd_hist a_3]
-set bug_info [string trim [string range $bug_info 0 [expr {[string first "\n" $bug_info] - 1}]]]
 if {$bug_info != "The shape has not been modified."} {
   puts "ERROR: OCC28226 is reproduced. Command modified does not work correctly."
 }
 
 set bug_info [isdeleted usd_hist a_3]
-set bug_info [string trim [string range $bug_info 0 [expr {[string first "\n" $bug_info] - 1}]]]
 if {$bug_info != "Not deleted."} {
   puts "ERROR: OCC28226 is reproduced. Command isdeleted does not work correctly."
 }
 
 set bug_info [isdeleted usd_hist a_9]
-set bug_info [string trim [string range $bug_info 0 [expr {[string first "\n" $bug_info] - 1}]]]
 if {$bug_info != "Deleted."} {
   puts "ERROR: OCC28226 is reproduced. Command isdeleted does not work correctly."
 }
 
 set bug_info [isdeleted usd_hist a_1_8]
-set bug_info [string trim [string range $bug_info 0 [expr {[string first "\n" $bug_info] - 1}]]]
 if {$bug_info != "Deleted."} {
   puts "ERROR: OCC28226 is reproduced. Command isdeleted does not work correctly."
 }
 
 set bug_info [isdeleted usd_hist a_1_9]
-set bug_info [string trim [string range $bug_info 0 [expr {[string first "\n" $bug_info] - 1}]]]
 if {$bug_info != "Deleted."} {
   puts "ERROR: OCC28226 is reproduced. Command isdeleted does not work correctly."
 }
 
 set bug_info [isdeleted usd_hist a_10]
-set bug_info [string trim [string range $bug_info 0 [expr {[string first "\n" $bug_info] - 1}]]]
 if {$bug_info != "Not deleted."} {
   puts "ERROR: OCC28226 is reproduced. Command isdeleted does not work correctly."
 }
 
 set bug_info [isdeleted usd_hist a_11]
-set bug_info [string trim [string range $bug_info 0 [expr {[string first "\n" $bug_info] - 1}]]]
 if {$bug_info != "Not deleted."} {
   puts "ERROR: OCC28226 is reproduced. Command isdeleted does not work correctly."
 }

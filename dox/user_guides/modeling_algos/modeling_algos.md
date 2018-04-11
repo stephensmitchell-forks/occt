@@ -1292,7 +1292,7 @@ Generally, the history is available for the following types of sub-shapes of inp
 * Edge
 * Face
 
-Some algorithms are also support the history for Solids.
+Some algorithms also support the history for Solids.
 
 The history information consists of the following information:
 * Information about Deleted shapes;

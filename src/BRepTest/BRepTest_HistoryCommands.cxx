@@ -79,7 +79,7 @@ Standard_Integer SaveHistory(Draw_Interpretor& theDI,
   Handle(BRepTools_History) aHistory = BRepTest_Objects::History();
   if (aHistory.IsNull())
   {
-    theDI << "No history has been prepared yet.\n";
+    theDI << "No history has been prepared yet.";
     return 1;
   }
 
@@ -102,7 +102,7 @@ static Handle(BRepTools_History) GetHistory(Draw_Interpretor& theDI,
 
   if (aHistory.IsNull() || aHistory->History().IsNull())
   {
-    theDI << "History with the name " << theName << " does not exist.\n";
+    theDI << "History with the name " << theName << " does not exist.";
     return NULL;
   }
 
@@ -120,13 +120,13 @@ static TopoDS_Shape GetShape(Draw_Interpretor& theDI,
 
   if (aS.IsNull())
   {
-    theDI << theName << " is a null shape.\n";
+    theDI << theName << " is a null shape.";
     return TopoDS_Shape();
   }
 
   if (!BRepTools_History::IsSupportedType(aS))
   {
-    theDI << "History is not supported for this kind of shape.\n";
+    theDI << "History is not supported for this kind of shape.";
     return TopoDS_Shape();
   }
   return aS;
@@ -143,13 +143,10 @@ static TopoDS_Shape MakeCompound(const TopTools_ListOfShape& theLS)
     aC = theLS.First();
   else
   {
+    BRep_Builder().MakeCompound(TopoDS::Compound(aC));
     TopTools_ListIteratorOfListOfShape it(theLS);
     for (; it.More(); it.Next())
-    {
-      if (aC.IsNull())
-        BRep_Builder().MakeCompound(TopoDS::Compound(aC));
       BRep_Builder().Add(aC, it.Value());
-    }
   }
   return aC;
 }
@@ -180,7 +177,7 @@ Standard_Integer Modified(Draw_Interpretor& theDI,
 
   if (aModified.IsEmpty())
   {
-    theDI << "The shape has not been modified.\n";
+    theDI << "The shape has not been modified.";
     return 0;
   }
 
@@ -215,7 +212,7 @@ Standard_Integer Generated(Draw_Interpretor& theDI,
 
   if (aGenerated.IsEmpty())
   {
-    theDI << "No shapes were generated from the shape.\n";
+    theDI << "No shapes were generated from the shape.";
     return 0;
   }
 
@@ -246,7 +243,7 @@ Standard_Integer IsDeleted(Draw_Interpretor& theDI,
   if (aS.IsNull())
     return 1;
 
-  theDI << (aHistory->IsRemoved(aS) ? "Deleted" : "Not deleted") << ".\n";
+  theDI << (aHistory->IsRemoved(aS) ? "Deleted." : "Not deleted.");
 
   return 0;
 }

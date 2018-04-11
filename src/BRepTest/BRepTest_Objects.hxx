@@ -37,7 +37,7 @@ public:
     SetHistory(new BRepTools_History(theArguments, theAlgo));
   }
 
-  //! Sets the history of the given algorithm into the session.
+  //! Adds the history of the given algorithm into the session.
   template <class TheAlgo>
   static void AddHistory(const TopTools_ListOfShape& theArguments,
                          TheAlgo& theAlgo)

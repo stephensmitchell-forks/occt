@@ -2951,7 +2951,7 @@ Here are some examples illustrating the History information.
 
 @subsubsection occt_algorithms_history_ex_del Deleted shapes
 
-The result of CUT operation of two overlapping planar faces (see the example below) does not contain any parts from the tool face. Thus, the tool faces is considered as Deleted.
+The result of CUT operation of two overlapping planar faces (see the example below) does not contain any parts from the tool face. Thus, the tool face is considered as Deleted.
 If the faces are not fully coinciding, the result must contain some parts of the object face. In this case object face will be considered as not deleted.
 But if the faces are fully coinciding, the result must be empty, and both faces will be considered as Deleted.
 
@@ -3028,7 +3028,7 @@ modified m2 cut_hist e2
 
 The two intersecting edges will both have the intersection vertices Generated from them.
 
-Example of interfering faces
+As for the operation with intersecting faces, consider the following example:
 
 ~~~~
 plane p1 0 0 0 0 0 1
