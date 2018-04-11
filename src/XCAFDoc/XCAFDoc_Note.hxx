@@ -22,6 +22,7 @@
 #include <OSD_File.hxx>
 #include <TDF_Attribute.hxx>
 #include <TDF_LabelSequence.hxx>
+#include <XCAFNoteObjects_NoteObject.hxx>
 
 class Standard_GUID;
 class TDF_RelocationTable;
@@ -59,6 +60,12 @@ public:
 
   //! Checks if the note isn't linked to annotated items.
   Standard_EXPORT Standard_Boolean IsOrphan() const;
+
+  //! Returns auxiliary data object
+  Standard_EXPORT Handle(XCAFNoteObjects_NoteObject) GetObject() const;
+
+  //! Updates auxiliary data
+  Standard_EXPORT void SetObject(const Handle(XCAFNoteObjects_NoteObject)& theObject);
 
 public:
 
