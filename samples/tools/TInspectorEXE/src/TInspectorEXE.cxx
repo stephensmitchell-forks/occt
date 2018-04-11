@@ -16,7 +16,7 @@
 
 #include <TInspectorEXE_OpenFileDialog.hxx>
 
-#include <TInspector_Communicator.hxx>
+#include <inspector/TInspector_Communicator.hxx>
 
 #include <OSD_Environment.hxx>
 

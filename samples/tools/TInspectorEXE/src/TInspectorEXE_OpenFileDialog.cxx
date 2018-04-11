@@ -16,7 +16,7 @@
 #include <TInspectorEXE_OpenFileDialog.hxx>
 #include <TInspectorEXE_OpenFileViewModel.hxx>
 
-#include <TInspector_Communicator.hxx>
+#include <inspector/TInspector_Communicator.hxx>
 
 #include <Standard_WarningsDisable.hxx>
 #include <QApplication>
