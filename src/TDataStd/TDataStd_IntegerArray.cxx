@@ -70,7 +70,9 @@ static Handle(TDataStd_IntegerArray) SetAttr(const TDF_Label&       label,
 
 TDataStd_IntegerArray::TDataStd_IntegerArray()
   :myIsDelta(Standard_False), myID(GetID())
-{}
+{
+  SetMultiIDSupport();
+}
 
 //=======================================================================
 //function : Init

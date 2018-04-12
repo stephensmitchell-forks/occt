@@ -63,7 +63,9 @@ static Handle(TDataStd_ReferenceArray) SetAttr(const TDF_Label&     label,
 //purpose  : Empty Constructor
 //=======================================================================
 TDataStd_ReferenceArray::TDataStd_ReferenceArray() : myID(GetID())
-{}
+{
+  SetMultiIDSupport();
+}
 
 //=======================================================================
 //function : Init

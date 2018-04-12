@@ -86,7 +86,9 @@ TDataStd_Real::TDataStd_Real ()
      : myValue     (RealFirst()),
        myDimension (TDataStd_SCALAR),
        myID(GetID())
-{}
+{
+  SetMultiIDSupport();
+}
 
 
 

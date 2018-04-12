@@ -88,7 +88,9 @@ static Handle(TDataStd_BooleanArray) SetAttr(const TDF_Label&       label,
 //purpose  : Empty Constructor
 //=======================================================================
 TDataStd_BooleanArray::TDataStd_BooleanArray() : myID(GetID())
-{}
+{
+  SetMultiIDSupport();
+}
 
 //=======================================================================
 //function : Init
