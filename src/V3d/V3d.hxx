@@ -93,12 +93,6 @@ public:
 
   Standard_EXPORT static void SwitchViewsinWindow (const Handle(V3d_View)& aPreviousView, const Handle(V3d_View)& aNextView);
 
-  //! Prints the name of TypeOfOrientation type as a String on the Stream.
-  static Standard_OStream& Print (const V3d_TypeOfOrientation theOrientationType, Standard_OStream& theStream)
-  {
-    return (theStream << TypeOfOrientationToString (theOrientationType));
-  }
-
   //! Returns the string name for a given orientation type.
   //! @param theType orientation type
   //! @return string identifier from the list Xpos, Ypos, Zpos and others
