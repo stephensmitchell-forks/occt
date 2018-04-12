@@ -70,7 +70,9 @@ static Handle(TDataStd_RealArray) SetAttr(const TDF_Label&       label,
 
 TDataStd_RealArray::TDataStd_RealArray() : myIsDelta(Standard_False),
   myID(GetID())
-{}
+{
+  SetMultiIDSupport();
+}
 
 //=======================================================================
 //function : Init

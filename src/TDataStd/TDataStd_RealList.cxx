@@ -56,7 +56,9 @@ static Handle(TDataStd_RealList) SetAttr(const TDF_Label&       label,
 //purpose  : Empty Constructor
 //=======================================================================
 TDataStd_RealList::TDataStd_RealList() : myID(GetID())
-{}
+{
+  SetMultiIDSupport();
+}
 
 //=======================================================================
 //function : Set

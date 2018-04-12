@@ -42,7 +42,9 @@ const Standard_GUID& TDataStd_ByteArray::GetID()
 //=======================================================================
 TDataStd_ByteArray::TDataStd_ByteArray() : myIsDelta(Standard_False),
   myID(GetID())
-{}
+{
+  SetMultiIDSupport();
+}
 
 //=======================================================================
 //function : SetAttr

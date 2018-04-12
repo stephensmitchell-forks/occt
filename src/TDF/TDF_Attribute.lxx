@@ -22,7 +22,8 @@
 enum {
   TDF_AttributeValidMsk     = 1,
   TDF_AttributeBackupMsk    = 2,
-  TDF_AttributeForgottenMsk = 4
+  TDF_AttributeForgottenMsk = 4,
+  TDF_AttributeMultiIDMsk   = 8
 };
 
 inline Standard_Integer TDF_Attribute::Transaction() const
@@ -59,3 +60,15 @@ inline Standard_Boolean TDF_Attribute::IsForgotten() const
 inline Standard_OStream& operator << (Standard_OStream& anOS,
                                       const Handle(TDF_Attribute)& anAtt)
 { return anAtt->Dump(anOS); }
+
+// IsMultiID attribute
+inline Standard_Boolean TDF_Attribute::IsMultiID () const
+{
+  return (myFlags & TDF_AttributeMultiIDMsk) != 0;
+}
+
+// SetMultiIDSupport
+inline void TDF_Attribute::SetMultiIDSupport()
+{
+  myFlags = myFlags | TDF_AttributeMultiIDMsk;
+}

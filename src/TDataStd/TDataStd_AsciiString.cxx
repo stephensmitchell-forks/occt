@@ -31,6 +31,7 @@ IMPLEMENT_STANDARD_RTTIEXT(TDataStd_AsciiString,TDF_Attribute)
 TDataStd_AsciiString::TDataStd_AsciiString(): myID(GetID())
 {
   myString.Clear();
+  SetMultiIDSupport();
 }
 
 //=======================================================================

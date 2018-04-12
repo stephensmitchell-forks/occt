@@ -56,7 +56,9 @@ static Handle(TDataStd_IntegerList) SetAttr(const TDF_Label&       label,
 //purpose  : Empty Constructor
 //=======================================================================
 TDataStd_IntegerList::TDataStd_IntegerList() : myID(GetID())
-{}
+{
+  SetMultiIDSupport();
+}
 
 //=======================================================================
 //function : Set

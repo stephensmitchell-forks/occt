@@ -358,6 +358,13 @@ Standard_Integer BinLDrivers_DocumentRetrievalDriver::ReadSubTree
         tAtt = Handle(TDF_Attribute)::DownCast(myRelocTable.Find(anID));
       else
         tAtt = aDriver->NewEmpty();
+
+      Handle(TDF_Attribute) att;
+      const Standard_GUID& curGuid = tAtt->ID(); //default guid
+      if(tAtt->IsMultiID() && theLabel.FindAttribute(curGuid, att)) {
+        static const Standard_GUID fbidGuid("ffffffff-ffff-ffff-ffff-ffffffffffff");
+        tAtt->SetID(fbidGuid);
+      }
       if (tAtt->Label().IsNull())
         theLabel.AddAttribute (tAtt);
       else

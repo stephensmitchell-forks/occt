@@ -372,6 +372,8 @@ Standard_OStream& operator<< (Standard_OStream& anOS) const
   //! Should be private.
   Standard_EXPORT void Forget (const Standard_Integer aTransaction);
 
+  //! Returns True if the attribute supports several attributes of the same type on the Label
+  Standard_EXPORT Standard_Boolean IsMultiID () const;
 
 friend class TDF_Data;
 friend class TDF_Label;
@@ -388,7 +390,8 @@ protected:
   //! Initializes fields.
   Standard_EXPORT TDF_Attribute();
 
-
+  //! Sets myFlags to state allowing multi ID usage (several attributes of the same type on the Label).
+  Standard_EXPORT void SetMultiIDSupport();
 
 private:
 

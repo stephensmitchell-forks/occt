@@ -36,6 +36,7 @@
 #include <XmlLDrivers.hxx>
 #include <TDocStd_Owner.hxx>
 #include <TDocStd_Document.hxx>
+#include <Standard_GUID.hxx>
 
 IMPLEMENT_DOMSTRING (TagString,         "tag")
 IMPLEMENT_DOMSTRING (LabelString,       "label")
@@ -257,13 +258,21 @@ Standard_Integer XmlMDF::ReadSubTree (const XmlObjMgt_Element&    theElement,
             tAtt = Handle(TDF_Attribute)::DownCast(theRelocTable.Find(anID));
           else
             tAtt = driver -> NewEmpty();
-	  if (tAtt->Label().IsNull())
-	    theLabel.AddAttribute (tAtt);
-	  else
-	    driver->myMessageDriver->Send
-	      (TCollection_ExtendedString("XmlDriver warning: ") +
-	       "attempt to attach attribute " +
-	       aName + " to a second label", Message_Warning);
+
+          Handle(TDF_Attribute) att;
+          const Standard_GUID& curGuid = tAtt->ID(); //default guid
+          if(tAtt->IsMultiID() && theLabel.FindAttribute(curGuid, att)) {
+            static const Standard_GUID fbidGuid("ffffffff-ffff-ffff-ffff-ffffffffffff");
+            tAtt->SetID(fbidGuid);
+          }
+
+          if (tAtt->Label().IsNull())
+            theLabel.AddAttribute (tAtt);
+          else
+            driver->myMessageDriver->Send
+            (TCollection_ExtendedString("XmlDriver warning: ") +
+            "attempt to attach attribute " +
+            aName + " to a second label", Message_Warning);
 
           if (! driver -> Paste (pAtt, tAtt, theRelocTable))
           {

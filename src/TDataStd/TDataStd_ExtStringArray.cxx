@@ -69,7 +69,9 @@ Handle(TDataStd_ExtStringArray) SetAttr(const TDF_Label&       label,
 
 TDataStd_ExtStringArray::TDataStd_ExtStringArray() 
   : myIsDelta(Standard_False), myID(GetID())
-{}
+{
+  SetMultiIDSupport();
+}
 
 //=======================================================================
 //function : Init

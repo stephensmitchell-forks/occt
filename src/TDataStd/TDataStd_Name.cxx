@@ -86,7 +86,9 @@ Handle(TDataStd_Name) TDataStd_Name::Set (const TDF_Label&    label,
 //=======================================================================
 
 TDataStd_Name::TDataStd_Name () : myID(GetID())
-{}
+{
+  SetMultiIDSupport();
+}
 
 //=======================================================================
 //function : Set
