@@ -1560,3 +1560,13 @@ Since new version, these unclassified faces are no longer added into resulting s
 The following public methods of the *BOPAlgo_BuilderSolid* class have been removed as excessive:
 * void SetSolid(const TopoDS_Solid& theSolid);
 * const TopoDS_Solid& Solid() const;
+
+@subsection upgrade_730_replace_CDM_MessageDriver_interface_by_Message_Messenger Unification of the Error/Warning reporting system of Application Framework
+
+In order to unify OCCT Error/Warning reporting system the own messenger interface CDM_MessageDriver previously used by OCAF was replaced by Message_Messenger interface.
+New interface Message_Messenger provides better interface. For example, it handles message gravity, while messages passed to CDM_MessageDriver are of undefined type
+(errors, warnings, trace information - everything is passed as is). 
+Porting of user applications from an earlier OCCT version to version 7.3.0 requires taking into account the above mentioned replacement.
+I.e. everywhere where the method WriteMessage (MessageString) of old interface was used it should be replaced by corresponding method Send(MessageString, Message_Gravity)
+of the new interface. By default OCAF application uses a MessageDriver based on Message_PrinterOStream. In case of need a client can implement his own version 
+inheriting from Message_Printer class and add it to the Messanger.
