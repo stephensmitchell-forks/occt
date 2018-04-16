@@ -182,7 +182,7 @@ public:
   //! Attach P-Curve from the edge <aEold> on surface <aF>
   //! to the edge <aEnew>
   //! Returns 0 in case of success
-  Standard_EXPORT static Standard_Integer AttachExistingPCurve (const TopoDS_Edge& aEold, const TopoDS_Edge& aEnew, const TopoDS_Face& aF, const Handle(IntTools_Context)& aCtx);
+  Standard_EXPORT static Standard_Integer AttachExistingPCurve (const TopoDS_Edge& aEold, const TopoDS_Edge& aEnew, const TopoDS_Face& aF, Handle(IntTools_Context)& aCtx);
 
   //! Checks if CurveOnSurface of theE on theF matches with isoline of theF surface.
   //! Sets corresponding values for isTheUIso and isTheVIso variables.

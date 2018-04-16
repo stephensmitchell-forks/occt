@@ -1354,51 +1354,52 @@ Standard_Boolean BOPTools_AlgoTools::IsSplitToReverse
 //purpose  : 
 //=======================================================================
 Standard_Boolean BOPTools_AlgoTools::IsSplitToReverse
-  (const TopoDS_Edge& aEF1,
-   const TopoDS_Edge& aEF2,
+  (const TopoDS_Edge& theESp,
+   const TopoDS_Edge& theEOr,
    Handle(IntTools_Context)& theContext)
 {
-  Standard_Boolean bRet, bIsDegenerated;
-  //
-  bRet=Standard_False;
-  bIsDegenerated=(BRep_Tool::Degenerated(aEF1) || 
-                  BRep_Tool::Degenerated(aEF2));
-  if (bIsDegenerated) {
-    return bRet;
-  }
-  //
-  Standard_Real a, b;
-  TopAbs_Orientation aOrE, aOrSp;
-  Handle(Geom_Curve)aC1, aC2;
-  //
-  aC2=BRep_Tool::Curve(aEF2, a, b);
-  aC1=BRep_Tool::Curve(aEF1, a, b);
-  //
-  if (aC1==aC2) {
-    aOrE=aEF2.Orientation();
-    aOrSp=aEF1.Orientation();
-    bRet=(aOrE!=aOrSp);
-    return bRet;
-  }
-  //
-  Standard_Real aT1, aT2, aScPr;
-  gp_Vec aV1, aV2;
-  gp_Pnt aP;
-  //
-  aT1=BOPTools_AlgoTools2D::IntermediatePoint(a, b);
-  aC1->D0(aT1, aP);
-  BOPTools_AlgoTools2D::EdgeTangent(aEF1, aT1, aV1);
-  gp_Dir aDT1(aV1);
-  //
-  theContext->ProjectPointOnEdge(aP, aEF2, aT2);
-  //
-  BOPTools_AlgoTools2D::EdgeTangent(aEF2, aT2, aV2);
-  gp_Dir aDT2(aV2);
-  //
-  aScPr=aDT1*aDT2;
-  bRet=(aScPr<0.);
-  //
-  return bRet;
+  // The idea is to compare the tangent vectors of two edges computed in
+  // the same point. Thus, we need to take the point on split edge (since it is
+  // shorter) and project it onto original edge to find corresponding parameter.
+
+  if (BRep_Tool::Degenerated(theESp) ||
+      BRep_Tool::Degenerated(theEOr))
+    return Standard_False;
+
+  // Get the curves from the edges
+  Standard_Real f, l;
+  Handle(Geom_Curve) aCSp = BRep_Tool::Curve(theESp, f, l);
+  Handle(Geom_Curve) aCOr = BRep_Tool::Curve(theEOr, f, l);
+
+  // If the curves are the same, compare orientations only
+  if (aCSp == aCOr)
+    return theESp.Orientation() != theEOr.Orientation();
+
+  // Find valid range of the split edge, to ensure that the point for computing
+  // tangent vectors will be inside both edges.
+  if (!BRepLib::FindValidRange(theESp, f, l))
+    BRep_Tool::Range(theESp, f, l);
+
+  // Take the middle point
+  const Standard_Real aTm = BOPTools_AlgoTools2D::IntermediatePoint(f, l);
+  // Compute tangent vector on split edge
+  gp_Vec aVSpTgt;
+  if (!BOPTools_AlgoTools2D::EdgeTangent(theESp, aTm, aVSpTgt))
+    return Standard_False;
+
+  // Find corresponding parameter on the original edge
+  Standard_Real aTmOr;
+  if (!theContext->ProjectPointOnEdge(aCSp->Value(aTm), theEOr, aTmOr))
+    return Standard_False;
+
+  // Compute tangent vector on original edge
+  gp_Vec aVOrTgt;
+  if (!BOPTools_AlgoTools2D::EdgeTangent(theEOr, aTmOr, aVOrTgt))
+    return Standard_False;
+
+  // Compute the Dot product
+  Standard_Real aCos = aVSpTgt.Dot(aVOrTgt);
+  return (aCos < 0.);
 }
 
 //=======================================================================
