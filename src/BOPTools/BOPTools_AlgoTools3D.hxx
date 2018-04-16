@@ -191,7 +191,7 @@ public:
                                                          const Standard_Real aT,
                                                          gp_Pnt2d& aP2D,
                                                          gp_Pnt& aPx,
-                                                         Handle(IntTools_Context)& theContext);
+                                                         const Handle(IntTools_Context)& theContext);
   
 
   //! Compute the point <aPx>,  (<aP2D>)  that is near to
@@ -208,7 +208,7 @@ public:
                                                          const TopoDS_Face& aF,
                                                          gp_Pnt2d& aP2D,
                                                          gp_Pnt& aPx,
-                                                         Handle(IntTools_Context)& theContext);
+                                                         const Handle(IntTools_Context)& theContext);
   
 
   //! Returns simple step value that is used in 2D-computations
@@ -232,7 +232,7 @@ public:
   Standard_EXPORT static Standard_Integer PointInFace (const TopoDS_Face& theF, 
                                                        gp_Pnt& theP, 
                                                        gp_Pnt2d& theP2D, 
-                                                       Handle(IntTools_Context)& theContext);
+                                                       const Handle(IntTools_Context)& theContext);
 
   //! Computes a point <theP> inside the face <theF> 
   //! using starting point taken by the parameter <theT> 
@@ -249,7 +249,7 @@ public:
                                                        const Standard_Real theDt2D,
                                                        gp_Pnt& theP, 
                                                        gp_Pnt2d& theP2D, 
-                                                       Handle(IntTools_Context)& theContext);
+                                                       const Handle(IntTools_Context)& theContext);
 
   //! Computes a point <theP> inside the face <theF> 
   //! using the line <theL> so that 2D point
@@ -260,7 +260,7 @@ public:
                                                        const Handle(Geom2d_Curve)& theL,
                                                        gp_Pnt& theP, 
                                                        gp_Pnt2d& theP2D, 
-                                                       Handle(IntTools_Context)& theContext,
+                                                       const Handle(IntTools_Context)& theContext,
                                                        const Standard_Real theDt2D = 0.0);
 
 

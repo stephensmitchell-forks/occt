@@ -510,7 +510,7 @@ Standard_Integer BOPTools_AlgoTools3D::PointNearEdge
    const Standard_Real aT, 
    gp_Pnt2d& aPx2DNear,
    gp_Pnt& aPxNear,
-   Handle(IntTools_Context)& theContext)
+   const Handle(IntTools_Context)& theContext)
 {
   Standard_Real aTolE, aTolF, dTx, dT2D;
   Handle(Geom_Surface) aS;
@@ -593,7 +593,7 @@ Standard_Integer BOPTools_AlgoTools3D::PointNearEdge
    const TopoDS_Face& aF, 
    gp_Pnt2d& aPInFace2D, 
    gp_Pnt& aPInFace,
-   Handle(IntTools_Context)& theContext)
+   const Handle(IntTools_Context)& theContext)
 {
   Standard_Real aT, aT1, aT2;
   //
@@ -783,7 +783,7 @@ Standard_Integer BOPTools_AlgoTools3D::PointInFace
   (const TopoDS_Face& theF,
    gp_Pnt& theP,
    gp_Pnt2d& theP2D,
-   Handle(IntTools_Context)& theContext)
+   const Handle(IntTools_Context)& theContext)
 {
   Standard_Integer i, iErr = 1;
   Standard_Real aUMin, aUMax, aVMin, aVMax, aUx;
@@ -822,7 +822,7 @@ Standard_Integer BOPTools_AlgoTools3D::PointInFace
    const Standard_Real theDt2D,
    gp_Pnt& theP,
    gp_Pnt2d& theP2D,
-   Handle(IntTools_Context)& theContext)
+   const Handle(IntTools_Context)& theContext)
 {
   Standard_Integer iErr;
   Standard_Real f, l;
@@ -870,7 +870,7 @@ Standard_Integer BOPTools_AlgoTools3D::PointInFace
    const Handle(Geom2d_Curve)& theL2D,
    gp_Pnt& theP,
    gp_Pnt2d& theP2D,
-   Handle(IntTools_Context)& theContext,
+   const Handle(IntTools_Context)& theContext,
    const Standard_Real theDt2D)
 {
   Standard_Boolean bIsDone, bHasFirstPoint, bHasSecondPoint;

@@ -45,7 +45,7 @@ class IntTools_Context;
 class TopoDS_Solid;
 class IntTools_Range;
 class TopoDS_Shell;
-
+class Message_Report;
 
 class BOPTools_AlgoTools 
 {
@@ -77,19 +77,89 @@ public:
   Standard_EXPORT static void MakeContainer (const TopAbs_ShapeEnum theType, TopoDS_Shape& theShape);
   
   Standard_EXPORT static Standard_Boolean IsHole (const TopoDS_Shape& aW, const TopoDS_Shape& aF);
-  
-  //! Returns True if the shape theSplit has opposite
-  //! direction than theShape
-  //! theContext - cashed geometrical tools
-  Standard_EXPORT static Standard_Boolean IsSplitToReverse (const TopoDS_Shape& theSplit, const TopoDS_Shape& theShape, Handle(IntTools_Context)& theContext);
-  
-  //! Returns True if normal direction of the face
-  //! theShape is not the same as for the face
-  //! theSplit
-  //! theContext - cashed geometrical tools
-  Standard_EXPORT static Standard_Boolean IsSplitToReverse (const TopoDS_Face& theSplit, const TopoDS_Face& theShape, Handle(IntTools_Context)& theContext);
-  
-  Standard_EXPORT static Standard_Boolean IsSplitToReverse (const TopoDS_Edge& aE1, const TopoDS_Edge& aE2, Handle(IntTools_Context)& aContext);
+
+  //! Checks if the direction of the split shape is opposite to
+  //! the direction of the original shape.
+  //! The method is an overload for (Edge,Edge) and (Face,Face) corresponding
+  //! methods and checks only these types of shapes.
+  //! For faces the method checks if normal directions are opposite.
+  //! For edges the method checks if tangent vectors are opposite.
+  //!
+  //! In case the directions do not coincide, it returns TRUE, meaning
+  //! that split shape has to be reversed to match the direction of the
+  //! original shape.
+  //!
+  //! If requested (<theError> is not null), the method returns the status of the operation:
+  //! - 0 - no error;
+  //! - Error from (Edge,Edge) or (Face,Face) corresponding method
+  //! - 100 - bad types.
+  //! In case of any error the method always returns FALSE.
+  //!
+  //! @param theSplit [in] Split shape
+  //! @param theShape [in] Original shape
+  //! @param theContext [in] Cashed geometrical tools
+  //! @param theError [out] Error Status of the operation
+  Standard_EXPORT static Standard_Boolean IsSplitToReverse(const TopoDS_Shape& theSplit,
+                                                           const TopoDS_Shape& theShape,
+                                                           const Handle(IntTools_Context)& theContext,
+                                                           Standard_Integer *theError = NULL);
+
+  //! Add-on for the *IsSplitToReverse()* to check for its errors
+  //! and in case of any add the *BOPAlgo_AlertUnableToOrientTheShape*
+  //! warning to the report.
+  Standard_EXPORT static Standard_Boolean IsSplitToReverseWithWarn(const TopoDS_Shape& theSplit,
+                                                                   const TopoDS_Shape& theShape,
+                                                                   const Handle(IntTools_Context)& theContext,
+                                                                   const Handle(Message_Report)& theReport = NULL);
+
+  //! Checks if the normal direction of the split face is opposite to
+  //! the normal direction of the original face.
+  //! The normal directions for both faces are taken in the same point -
+  //! point inside the split face is projected onto the original face.
+  //! Returns TRUE if the normals do not coincide, meaning the necessity
+  //! to revert the orientation of the split face to match the direction
+  //! of the original face.
+  //!
+  //! If requested (<theError> is not null), the method returns the status of the operation:
+  //! - 0 - no error;
+  //! - 1 - unable to find the point inside split face;
+  //! - 2 - unable to compute the normal for the split face;
+  //! - 3 - unable to project the point inside the split face on the original face;
+  //! - 4 - unable to compute the normal for the original face.
+  //! In case of any error the method always returns FALSE.
+  //!
+  //! @param theSplit [in] Split face
+  //! @param theShape [in] Original face
+  //! @param theContext [in] Cashed geometrical tools
+  //! @param theError [out] Error Status of the operation
+  Standard_EXPORT static Standard_Boolean IsSplitToReverse(const TopoDS_Face& theSplit,
+                                                           const TopoDS_Face& theShape,
+                                                           const Handle(IntTools_Context)& theContext,
+                                                           Standard_Integer *theError = NULL);
+
+  //! Checks if the tangent vector of the split edge is opposite to
+  //! the tangent vector of the original edge.
+  //! The tangent vectors for both edges are computed in the same point -
+  //! point inside the split edge is projected onto the original edge.
+  //! Returns TRUE if the tangent vectors do not coincide, meaning the necessity
+  //! to revert the orientation of the split edge to match the direction
+  //! of the original edge.
+  //!
+  //! If requested (<theError> is not null), the method returns the status of the operation:
+  //! - 0 - no error;
+  //! - 1 - unable to compute the tangent vector for the split edge;
+  //! - 2 - unable to project the point inside the split edge on the original edge;
+  //! - 4 - unable to compute the tangent vector for the original edge;
+  //! In case of any error the method always returns FALSE.
+  //!
+  //! @param theSplit [in] Split edge
+  //! @param theShape [in] Original edge
+  //! @param theContext [in] Cashed geometrical tools
+  //! @param theError [out] Error Status of the operation
+  Standard_EXPORT static Standard_Boolean IsSplitToReverse(const TopoDS_Edge& theSplit,
+                                                           const TopoDS_Edge& theShape,
+                                                           const Handle(IntTools_Context)& theContext,
+                                                           Standard_Integer *theError = NULL);
   
   Standard_EXPORT static Standard_Boolean AreFacesSameDomain (const TopoDS_Face& theF1,
                                          const TopoDS_Face& theF2, 
