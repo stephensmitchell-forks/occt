@@ -102,6 +102,7 @@ Standard_Boolean ShapeFix_IntersectionTool::SplitEdge(const TopoDS_Edge& edge,
                                                       TopoDS_Edge& newE2,
                                                       const Standard_Real preci) const
 {
+
   Standard_Real a, b;
   ShapeAnalysis_Edge sae;
 
@@ -253,6 +254,9 @@ Standard_Boolean ShapeFix_IntersectionTool::SplitEdge1(const Handle(ShapeExtend_
                                                        const Standard_Real preci,
                                                        ShapeFix_DataMapOfShapeBox2d& boxes) const
 {
+  if (num > sewd->NbEdges())
+    return Standard_False;
+
   TopoDS_Edge edge = sewd->Edge(num);
   TopoDS_Edge newE1, newE2;
   if(!SplitEdge(edge,param,vert,face,newE1,newE2,preci)) return Standard_False;
