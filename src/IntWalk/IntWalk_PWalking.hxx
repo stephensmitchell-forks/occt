@@ -130,7 +130,10 @@ public:
   
   Standard_EXPORT Standard_Boolean TestArret (const Standard_Boolean DejaReparti, TColStd_Array1OfReal& Param, IntImp_ConstIsoparametric& ChoixIso);
   
-  Standard_EXPORT void RepartirOuDiviser (Standard_Boolean& DejaReparti, IntImp_ConstIsoparametric& ChoixIso, Standard_Boolean& Arrive);
+  Standard_EXPORT void RepartirOuDiviser(const IntWalk_StatusDeflection& theCurrentStatus, 
+                                         Standard_Boolean& DejaReparti,
+                                         IntImp_ConstIsoparametric& ChoixIso,
+                                         Standard_Boolean& Arrive);
   
     void AddAPoint (Handle(IntSurf_LineOn2S)& line, const IntSurf_PntOn2S& POn2S);
   

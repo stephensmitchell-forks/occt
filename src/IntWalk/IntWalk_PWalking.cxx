@@ -687,7 +687,7 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
   }
   //
   Standard_Boolean Arrive, DejaReparti;
-  const Standard_Integer RejectIndexMAX = 250000;
+  const Standard_Integer RejectIndexMAX = 25000;
   Standard_Integer IncKey, RejectIndex;
   gp_Pnt pf,pl;
   //
@@ -736,6 +736,12 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
   Arrive = Standard_False;
   while(!Arrive) //010
   {
+    if (line->NbPoints() >= RejectIndexMAX)
+    {
+      Arrive = Standard_True;
+      break;
+    }
+
     aPrevStatus = aStatus;
 
     LevelOfIterWithoutAppend++;
@@ -745,7 +751,7 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
       if(DejaReparti) {
         break;
       }
-      RepartirOuDiviser(DejaReparti,ChoixIso,Arrive);
+      RepartirOuDiviser(aStatus, DejaReparti, ChoixIso, Arrive);
       LevelOfIterWithoutAppend = 0;
     }
     //
@@ -872,7 +878,7 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
       Param(2)=SvParam[1]; 
       Param(3)=SvParam[2];
       Param(4)=SvParam[3];
-      RepartirOuDiviser(DejaReparti, ChoixIso, Arrive);
+      RepartirOuDiviser(aStatus, DejaReparti, ChoixIso, Arrive);
     }
     else  //009 
     {
@@ -903,7 +909,7 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
           Arrive=Standard_True;
         }
 
-        RepartirOuDiviser(DejaReparti,ChoixIso,Arrive);
+        RepartirOuDiviser(aStatus, DejaReparti, ChoixIso, Arrive);
         LevelOfEmptyInmyIntersectionOn2S++;
         //
         if(LevelOfEmptyInmyIntersectionOn2S>10)
@@ -1036,7 +1042,7 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
         case IntWalk_ArretSurPointPrecedent:
           {
             Arrive = Standard_False;
-            RepartirOuDiviser(DejaReparti, ChoixIso, Arrive);
+            RepartirOuDiviser(aStatus, DejaReparti, ChoixIso, Arrive);
             break;
           }
         case IntWalk_PasTropGrand:
@@ -1046,7 +1052,7 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
             Param(3)=SvParam[2]; 
             Param(4)=SvParam[3];
 
-            if(LevelOfIterWithoutAppend > 5)
+            if ((LevelOfIterWithoutAppend > 5) && (aPrevStatus != IntWalk_StepTooSmall))
             {
               for (Standard_Integer i = 0; i < 4; i++)
               {
@@ -1240,7 +1246,7 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
 
               if (aStatus == IntWalk_ArretSurPoint)
               {
-                RepartirOuDiviser(DejaReparti,ChoixIso,Arrive);
+                RepartirOuDiviser(aStatus, DejaReparti, ChoixIso, Arrive);
               }
               else
               {
@@ -1321,13 +1327,13 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
 
                       //
                       LevelOfIterWithoutAppend=0;
-                      RepartirOuDiviser(DejaReparti,ChoixIso,Arrive);
+                      RepartirOuDiviser(aStatus, DejaReparti, ChoixIso, Arrive);
                     }
                     else
                     {
                       //fail framing divides the step
                       Arrive = Standard_False;
-                      RepartirOuDiviser(DejaReparti,ChoixIso,Arrive);
+                      RepartirOuDiviser(aStatus, DejaReparti, ChoixIso, Arrive);
                       NoTestDeflection = Standard_True;
                       ChoixIso = SauvChoixIso;
                     }
@@ -1582,7 +1588,7 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
                       }
                     }
 
-                    RepartirOuDiviser(DejaReparti,ChoixIso,Arrive);
+                    RepartirOuDiviser(aStatus, DejaReparti, ChoixIso, Arrive);
 
                     if(Arrive && 
                       myIntersectionOn2S.IsDone() && !myIntersectionOn2S.IsEmpty() &&
@@ -1603,7 +1609,7 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
                   //echec framing on border; division of step 
                   Arrive = Standard_False;
                   NoTestDeflection = Standard_True;
-                  RepartirOuDiviser(DejaReparti,ChoixIso,Arrive);
+                  RepartirOuDiviser(aStatus, DejaReparti, ChoixIso, Arrive);
                 }
               }//$$$ end framing on border (!close)
             }//004 fin TestArret return Arrive = True
@@ -2769,16 +2775,17 @@ SeekAdditionalPoints( const Handle(Adaptor3d_HSurface)& theASurf1,
   return isPrecise;
 }
 
-void IntWalk_PWalking::
-RepartirOuDiviser(Standard_Boolean& DejaReparti,
-                  IntImp_ConstIsoparametric& ChoixIso,
-                  Standard_Boolean& Arrive) 
-
-                  // at the neighborhood of a point, there is a fail of marching 
-                  // it is required to divide the steps to try to continue
-                  // if the step is too small if we are on border
-                  // restart in another direction if it was not done, otherwise stop
-
+//=======================================================================
+//function : RepartirOuDiviser
+//purpose  : at the neighborhood of a point, there is a fail of marching 
+// it is required to divide the steps to try to continue
+// if the step is too small if we are on border
+// restart in another direction if it was not done, otherwise stop
+//=======================================================================
+void IntWalk_PWalking::RepartirOuDiviser(const IntWalk_StatusDeflection& theCurrentStatus,
+                                         Standard_Boolean& DejaReparti,
+                                         IntImp_ConstIsoparametric& ChoixIso,
+                                         Standard_Boolean& Arrive)
 {
   //  Standard_Integer i;
   if (Arrive) {    //restart in the other direction
@@ -2821,11 +2828,12 @@ RepartirOuDiviser(Standard_Boolean& DejaReparti,
     }
   }  
   else  {
-    if (    pasuv[0]*0.5 < ResoU1
-      &&  pasuv[1]*0.5 < ResoV1
-      &&  pasuv[2]*0.5 < ResoU2
-      &&  pasuv[3]*0.5 < ResoV2
-      ) {
+    if ((theCurrentStatus == IntWalk_StepTooSmall) ||
+            (pasuv[0] * 0.5 < ResoU1
+            &&  pasuv[1] * 0.5 < ResoV1
+            &&  pasuv[2] * 0.5 < ResoU2
+            &&  pasuv[3] * 0.5 < ResoV2))
+    {
         if (!previoustg) {
           tglast = Standard_True;      // IS IT ENOUGH ????
         }
