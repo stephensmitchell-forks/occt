@@ -369,7 +369,7 @@ Standard_Boolean BOPTools_AlgoTools3D::GetApproxNormalToFaceOnEdge
    const Standard_Real aT,
    gp_Pnt& aPNear,
    gp_Dir& aDNF,
-   Handle(IntTools_Context)& theContext)
+   const Handle(IntTools_Context)& theContext)
 {
   gp_Pnt2d aPx2DNear;
   Standard_Integer iErr = BOPTools_AlgoTools3D::PointNearEdge 
@@ -398,7 +398,7 @@ Standard_Boolean BOPTools_AlgoTools3D::GetApproxNormalToFaceOnEdge
    const Standard_Real theStep,
    gp_Pnt& aPNear,
    gp_Dir& aDNF,
-   Handle(IntTools_Context)& theContext)
+   const Handle(IntTools_Context)& theContext)
 {
   gp_Pnt2d aPx2DNear;
   Standard_Integer iErr = BOPTools_AlgoTools3D::PointNearEdge 
@@ -563,7 +563,7 @@ Standard_Integer BOPTools_AlgoTools3D::PointNearEdge
    const Standard_Real theStep,
    gp_Pnt2d& aPx2DNear,
    gp_Pnt& aPxNear,
-   Handle(IntTools_Context)& theContext)
+   const Handle(IntTools_Context)& theContext)
 {
   Standard_Integer iErr = BOPTools_AlgoTools3D::PointNearEdge 
     (aE, aF, aT, theStep, aPx2DNear, aPxNear);

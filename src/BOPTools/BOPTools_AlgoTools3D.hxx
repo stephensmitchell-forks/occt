@@ -100,7 +100,7 @@ public:
                                                                        const Standard_Real aT,
                                                                        gp_Pnt& aPx,
                                                                        gp_Dir& aD,
-                                                                       Handle(IntTools_Context)& theContext);
+                                                                       const Handle(IntTools_Context)& theContext);
   
   //! Computes normal to the face <aF> for the 3D-point that
   //! belongs to the edge <aE> at parameter <aT>.<br>
@@ -142,7 +142,7 @@ public:
                                                                        const Standard_Real aDt2D,
                                                                        gp_Pnt& aP,
                                                                        gp_Dir& aDNF,
-                                                                       Handle(IntTools_Context)& theContext);
+                                                                       const Handle(IntTools_Context)& theContext);
 
   //! Compute the point <aPx>,  (<aP2D>)  that is near to
   //! the edge <aE>   at parameter <aT>  towards to the
@@ -160,7 +160,7 @@ public:
                                                          const Standard_Real aDt2D,
                                                          gp_Pnt2d& aP2D,
                                                          gp_Pnt& aPx,
-                                                         Handle(IntTools_Context)& theContext);
+                                                         const Handle(IntTools_Context)& theContext);
 
   //! Compute the point <aPx>,  (<aP2D>)  that is near to
   //! the edge <aE>   at parameter <aT>  towards to the
