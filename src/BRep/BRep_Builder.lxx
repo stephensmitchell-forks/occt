@@ -200,6 +200,16 @@ inline void BRep_Builder::Range(const TopoDS_Edge& E,
   Range(E,BRep_Tool::Surface(F,l),l,First,Last);
 }
 
+//=======================================================================
+//function : UpdateUVPoints
+//purpose  : Reset UV points of the parametric curve of the edge on the face
+//=======================================================================
+inline void BRep_Builder::UpdateUVPoints(const TopoDS_Edge& theE,
+                                         const TopoDS_Face& theF)
+{
+  TopLoc_Location aLoc;
+  UpdateUVPoints(theE, BRep_Tool::Surface(theF, aLoc), aLoc);
+}
 
 //=======================================================================
 //function : MakeVertex

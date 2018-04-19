@@ -253,28 +253,21 @@ public:
   //! parameter of Vout on Eout.
   Standard_EXPORT void Transfert (const TopoDS_Edge& Ein, const TopoDS_Edge& Eout, const TopoDS_Vertex& Vin, const TopoDS_Vertex& Vout) const;
 
+  //! Reset UV points of the parametric curve of the given
+  //! edge on the given face to the bounding points of the
+  //! parametric curve.
+  void UpdateUVPoints(const TopoDS_Edge& theE,
+                      const TopoDS_Face& theF);
 
-
-
-protected:
-
-
-
-
-
-private:
-
-
-
-
+  //! Reset UV points of the parametric curve of the given
+  //! edge on the given surface to the bounding points of the
+  //! parametric curve.
+  Standard_EXPORT void UpdateUVPoints(const TopoDS_Edge& theE,
+                                      const Handle(Geom_Surface)& theSurf,
+                                      const TopLoc_Location& theLoc);
 
 };
 
-
 #include <BRep_Builder.lxx>
-
-
-
-
 
 #endif // _BRep_Builder_HeaderFile

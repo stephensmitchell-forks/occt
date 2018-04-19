@@ -1020,64 +1020,6 @@ void  BRep_Tool::UVPoints(const TopoDS_Edge& E,
 }
 
 //=======================================================================
-//function : SetUVPoints
-//purpose  : 
-//=======================================================================
-
-void  BRep_Tool::SetUVPoints(const TopoDS_Edge& E,
-                             const Handle(Geom_Surface)& S,
-                             const TopLoc_Location& L, 
-                             const gp_Pnt2d& PFirst, 
-                             const gp_Pnt2d& PLast)
-{
-  TopLoc_Location l = L.Predivided(E.Location());
-  Standard_Boolean Eisreversed = (E.Orientation() == TopAbs_REVERSED);
-
-  // find the representation
-  const BRep_TEdge* TE = static_cast<const BRep_TEdge*>(E.TShape().get());
-  BRep_ListIteratorOfListOfCurveRepresentation itcr(TE->Curves());
-
-  while (itcr.More()) {
-    Handle(BRep_CurveRepresentation)& cr = itcr.Value();
-    if (cr->IsCurveOnSurface(S,l)) {
-      if (cr->IsCurveOnClosedSurface() && Eisreversed)
-      {
-        BRep_CurveOnClosedSurface* CS = static_cast<BRep_CurveOnClosedSurface*>(cr.get());
-        CS->SetUVPoints2(PFirst, PLast);
-      }
-      else
-      {
-        BRep_CurveOnSurface* CS = static_cast<BRep_CurveOnSurface*>(cr.get());
-        CS->SetUVPoints(PFirst, PLast);
-      }
-    }
-    itcr.Next();
-  }
-}
-
-//=======================================================================
-//function : SetUVPoints
-//purpose  : 
-//=======================================================================
-
-void  BRep_Tool::SetUVPoints(const TopoDS_Edge& E,
-                             const TopoDS_Face& F, 
-                             const gp_Pnt2d& PFirst, 
-                             const gp_Pnt2d& PLast)
-{
-  TopLoc_Location L;
-  const Handle(Geom_Surface)& S = BRep_Tool::Surface(F,L);
-  TopoDS_Edge aLocalEdge = E;
-  if (F.Orientation() == TopAbs_REVERSED) {
-    aLocalEdge.Reverse();
-//    SetUVPoints(TopoDS::Edge(E.Reversed()),S,L,PFirst,PLast);
-  }
-//  else
-//    SetUVPoints(E,S,L,PFirst,PLast);
-  SetUVPoints(aLocalEdge,S,L,PFirst,PLast);
-}
-
-//=======================================================================
 //function : HasContinuity
 //purpose  : Returns True if the edge is on the surfaces of the
 //           two faces.

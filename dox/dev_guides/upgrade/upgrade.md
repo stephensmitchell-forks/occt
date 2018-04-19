@@ -1560,3 +1560,11 @@ Since new version, these unclassified faces are no longer added into resulting s
 The following public methods of the *BOPAlgo_BuilderSolid* class have been removed as excessive:
 * void SetSolid(const TopoDS_Solid& theSolid);
 * const TopoDS_Solid& Solid() const;
+
+@subsection upgrade_730_uvpoints UVPoints management
+
+The method BRepTools::Update(shape) applied to the face updates the UV points of all edges on that face.
+Previously, it was trying to ensure that the connected edges had the same UV points by the means of the *BRep_Tool::SetUVPoints()*.
+Currently, the method just resets the UV points of the edge to the bounding points of the parametric curve of the edge on the face.
+The methods *SetUVPoints* of the class *BRep_Tool* have been removed as dangerous. UV points should be managed by the *BRep_Builder* class.
+The methods *BRep_Builder::UpdateUVPoints* have been added for that.

@@ -171,59 +171,9 @@ static void UpdateCurves(BRep_ListOfCurveRepresentation& lcr,
                          const gp_Pnt2d& Pf,
                          const gp_Pnt2d& Pl)
 {
-  BRep_ListIteratorOfListOfCurveRepresentation itcr(lcr);
-  Handle(BRep_CurveRepresentation) cr;
-  Handle(BRep_GCurve) GC;
-  Standard_Real f = -Precision::Infinite(), l = Precision::Infinite();
-
-  // search the range of the 3d curve
-  // and remove any existing representation
-
-  while (itcr.More()) {
-    GC = Handle(BRep_GCurve)::DownCast(itcr.Value());
-    if (!GC.IsNull()) {
-      if (GC->IsCurve3D()) {
-//      if (!C.IsNull()) { //xpu031198, edge degeneree
-
-        // xpu151298 : parameters can be setted for null curves
-        //             see lbo & flo, to determine whether range is defined
-        //             compare first and last parameters with default values.
-        GC->Range(f, l);
-      }
-      if (GC->IsCurveOnSurface(S,L)) {
-        // remove existing curve on surface
-        // cr is used to keep a reference on the curve representation
-        // this avoid deleting it as its content may be referenced by C or S
-        cr = itcr.Value();
-        lcr.Remove(itcr);
-      }
-      else {
-        itcr.Next();
-      }
-    }
-    else {
-      itcr.Next();
-    }
-  }
-
-  if (! C.IsNull()) {
-    Handle(BRep_CurveOnSurface) COS = new BRep_CurveOnSurface(C,S,L);
-    Standard_Real aFCur = 0.0, aLCur = 0.0;
-    COS->Range(aFCur, aLCur);
-    if (!Precision::IsInfinite(f))
-    {
-      aFCur = f;
-    }
-
-    if (!Precision::IsInfinite(l))
-    {
-      aLCur = l;
-    }
-
-    COS->SetRange(aFCur, aLCur);
-    COS->SetUVPoints(Pf, Pl);
-    lcr.Append(COS);
-  }
+  UpdateCurves(lcr, C, S, L);
+  if (!C.IsNull())
+    Handle(BRep_CurveOnSurface)::DownCast(lcr.Last())->SetUVPoints(Pf, Pl);
 }
 
 //=======================================================================
@@ -297,49 +247,9 @@ static void UpdateCurves(BRep_ListOfCurveRepresentation& lcr,
                          const gp_Pnt2d& Pf,
                          const gp_Pnt2d& Pl)
 {
-  BRep_ListIteratorOfListOfCurveRepresentation itcr(lcr);
-  Handle(BRep_CurveRepresentation) cr;
-  Handle(BRep_GCurve) GC;
-  Standard_Real f = -Precision::Infinite(), l = Precision::Infinite();
-
-  while (itcr.More()) {
-    GC = Handle(BRep_GCurve)::DownCast(itcr.Value());
-    if ( !GC.IsNull() ) {
-      if (GC->IsCurve3D()) {
-        GC->Range(f,l);
-      }
-      Standard_Boolean iscos = GC->IsCurveOnSurface(S,L);
-      if (iscos) break;
-    }
-    itcr.Next();
-  }
-
-  if (itcr.More())  {
-    // cr is used to keep a reference on the curve representation
-    // this avoid deleting it as its content may be referenced by C or S
-    cr = itcr.Value();
-    lcr.Remove(itcr);
-  }
-
-  if ( !C1.IsNull() && !C2.IsNull() ) {
-    Handle(BRep_CurveOnClosedSurface) COS = new 
-                    BRep_CurveOnClosedSurface(C1,C2,S,L,GeomAbs_C0);
-    Standard_Real aFCur = 0.0, aLCur = 0.0;
-    COS->Range(aFCur, aLCur);
-    if (!Precision::IsInfinite(f))
-    {
-      aFCur = f;
-    }
-
-    if (!Precision::IsInfinite(l))
-    {
-      aLCur = l;
-    }
-
-    COS->SetRange(aFCur, aLCur);
-    COS->SetUVPoints2(Pf, Pl);
-    lcr.Append(COS);
-  }
+  UpdateCurves(lcr, C1, C2, S, L);
+  if (!C1.IsNull() && !C2.IsNull())
+    Handle(BRep_CurveOnClosedSurface)::DownCast(lcr.Last())->SetUVPoints2(Pf, Pl);
 }
 
 
@@ -1164,6 +1074,33 @@ void  BRep_Builder::Range(const TopoDS_Edge& E,
   TE->Modified(Standard_True);
 }
 
+//=======================================================================
+//function : UpdateUVPoints
+//purpose  : Reset UV points of the parametric curve of the edge on the surface
+//=======================================================================
+void BRep_Builder::UpdateUVPoints(const TopoDS_Edge& theE,
+                                  const Handle(Geom_Surface)& theSurf,
+                                  const TopLoc_Location& theLoc)
+{
+  const Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*)&theE.TShape());
+  if (TE->Locked())
+    return;
+
+  const TopLoc_Location aELoc = theLoc.Predivided(theE.Location());
+  // Edge representations
+  BRep_ListOfCurveRepresentation& aLCR = TE->ChangeCurves();
+  BRep_ListIteratorOfListOfCurveRepresentation itLCR(aLCR);
+  for (; itLCR.More(); itLCR.Next())
+  {
+    Handle(BRep_GCurve) GC = Handle(BRep_GCurve)::DownCast(itLCR.Value());
+    if (!GC.IsNull() && GC->IsCurveOnSurface(theSurf, aELoc))
+    {
+      // Update UV points
+      GC->Update();
+      break;
+    }
+  }
+}
 
 //=======================================================================
 //function : Transfert

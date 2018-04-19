@@ -220,12 +220,6 @@ public:
   //! Gets the UV locations of the extremities of the edge.
   Standard_EXPORT static void UVPoints (const TopoDS_Edge& E, const TopoDS_Face& F, gp_Pnt2d& PFirst, gp_Pnt2d& PLast);
   
-  //! Sets the UV locations of the extremities of the edge.
-  Standard_EXPORT static void SetUVPoints (const TopoDS_Edge& E, const Handle(Geom_Surface)& S, const TopLoc_Location& L, const gp_Pnt2d& PFirst, const gp_Pnt2d& PLast);
-  
-  //! Sets the UV locations of the extremities of the edge.
-  Standard_EXPORT static void SetUVPoints (const TopoDS_Edge& E, const TopoDS_Face& F, const gp_Pnt2d& PFirst, const gp_Pnt2d& PLast);
-  
   //! Returns True if the edge is on the surfaces of the
   //! two faces.
   Standard_EXPORT static Standard_Boolean HasContinuity (const TopoDS_Edge& E, const TopoDS_Face& F1, const TopoDS_Face& F2);
