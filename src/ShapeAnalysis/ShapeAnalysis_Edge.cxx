@@ -469,13 +469,13 @@ Standard_Boolean ShapeAnalysis_Edge::CheckPoints (const gp_Pnt& P1A,
 						  const Standard_Real preci2) 
 {
   myStatus = ShapeExtend::EncodeStatus (ShapeExtend_OK);
-  if (P1A.SquareDistance (P2A) <= preci1 * preci1 &&
-      P1B.SquareDistance (P2B) <= preci2 * preci2)
-    return Standard_False;
-  else if (P1A.Distance (P2B) + (P1B.Distance (P2A)) <
-	   P1A.Distance (P2A) + (P1B.Distance (P2B)))
-    myStatus |= ShapeExtend::EncodeStatus (ShapeExtend_DONE1);
-  return Standard_True;
+  if( (P1A.SquareDistance(P2B) < P1A.SquareDistance(P2A) ) && 
+    ( P1B.SquareDistance(P2A) < P1B.SquareDistance(P2B)) )
+ {
+    myStatus |= ShapeExtend::EncodeStatus(ShapeExtend_DONE1);
+    return Standard_True;
+  }
+  return Standard_False;
 }
 
 
