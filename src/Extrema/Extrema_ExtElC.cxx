@@ -1049,8 +1049,9 @@ Standard_Boolean Extrema_ExtElC::IsParallel () const
 //=======================================================================
 Standard_Integer Extrema_ExtElC::NbExt () const
 {
-  if (IsParallel()) {
-    throw StdFail_InfiniteSolutions();
+  if (!IsDone())
+  {
+    throw StdFail_NotDone();
   }
   return myNbExt;
 }
@@ -1060,20 +1061,12 @@ Standard_Integer Extrema_ExtElC::NbExt () const
 //=======================================================================
 Standard_Real Extrema_ExtElC::SquareDistance (const Standard_Integer N) const
 {
-  if (!myDone) { 
-    throw StdFail_NotDone();
+  if (N < 1 || N > NbExt())
+  {
+    throw Standard_OutOfRange();
   }
-  if (myIsPar) {
-    if (N < 1 || N > 2) { 
-      throw Standard_OutOfRange();
-    }
-  }
-  else {  
-    if (N < 1 || N > NbExt()) { 
-      throw Standard_OutOfRange();
-    }
-  }
-  return mySqDist[N-1];
+
+  return mySqDist[N - 1];
 }
 //=======================================================================
 //function : Points
@@ -1083,9 +1076,11 @@ void Extrema_ExtElC::Points (const Standard_Integer N,
 			     Extrema_POnCurv& P1, 
 			     Extrema_POnCurv& P2) const
 {
-  if (N < 1 || N > NbExt()) { 
+  if (N < 1 || N > NbExt())
+  {
     throw Standard_OutOfRange();
   }
+
   P1 = myPoint[N-1][0];
   P2 = myPoint[N-1][1];
 }
