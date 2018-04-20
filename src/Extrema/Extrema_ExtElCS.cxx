@@ -142,7 +142,7 @@ void Extrema_ExtElCS::Perform(const gp_Lin& C,
     {
       IntAna_Quadric theQuadric(S);
       IntAna_IntConicQuad Inters(C, theQuadric);
-      if (Inters.IsDone())
+      if (Inters.IsDone() && !Inters.IsInQuadric())
       {
         myNbExt = Inters.NbPoints();
         aStartIdx = myNbExt;
@@ -244,7 +244,7 @@ void Extrema_ExtElCS::Perform(const gp_Lin& C,
     if (myPOnC1.Value().Distance(aCenter) <= S.Radius())
     {
       IntAna_IntConicQuad aLinSphere(C, S);
-      if (aLinSphere.IsDone())
+      if (aLinSphere.IsDone() && !aLinSphere.IsInQuadric())
       {
         myNbExt = aLinSphere.NbPoints();
         aStartIdx = myNbExt;
@@ -356,7 +356,7 @@ void Extrema_ExtElCS::Perform(const gp_Circ& C,
     IntAna_IntConicQuad anInter(C, S,
                                 Precision::Angular(),
                                 Precision::Confusion());
-    if(anInter.IsDone())
+    if (anInter.IsDone() && !anInter.IsInQuadric())
     {
       if(anInter.NbPoints() > 1)
       {
@@ -447,7 +447,7 @@ void Extrema_ExtElCS::Perform(const gp_Circ& C,
       IntAna_Quadric aCylQuad(S);
       IntAna_IntConicQuad aCircCylInter(C, aCylQuad);
       Standard_Integer aNbInter = 0;
-      if (aCircCylInter.IsDone())
+      if (aCircCylInter.IsDone() && !aCircCylInter.IsInQuadric())
         aNbInter = aCircCylInter.NbPoints();
 
       // Compute the extremas.
