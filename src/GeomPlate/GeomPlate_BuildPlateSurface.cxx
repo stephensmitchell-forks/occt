@@ -72,6 +72,7 @@
 #include <TColgp_SequenceOfVec.hxx>
 #include <TColStd_HArray1OfReal.hxx>
 #include <TColStd_SequenceOfInteger.hxx>
+#include <Message_ProgressIndicator.hxx>
 
 #include <stdio.h>
 // pour la verif G2
@@ -455,7 +456,7 @@ void GeomPlate_BuildPlateSurface::
 //fonction : Perform
 // Calcul la surface de remplissage avec les contraintes chargees
 //---------------------------------------------------------
-void GeomPlate_BuildPlateSurface::Perform()
+void GeomPlate_BuildPlateSurface::Perform(const Handle(Message_ProgressIndicator) & aProgress)
 { 
 #ifdef OCCT_DEBUG
   // Chronmetrage
@@ -658,7 +659,14 @@ void GeomPlate_BuildPlateSurface::Perform()
 	  //====================================================================
 	  //Resolution de la surface
 	  //====================================================================
-	  myPlate.SolveTI(myDegree, ComputeAnisotropie());
+
+	  myPlate.SolveTI(myDegree, ComputeAnisotropie(), aProgress);
+
+      if (!aProgress.IsNull() && aProgress->UserBreak())
+      {
+        return;
+      }
+
           if (!myPlate.IsDone())
           {
 #ifdef OCCT_DEBUG

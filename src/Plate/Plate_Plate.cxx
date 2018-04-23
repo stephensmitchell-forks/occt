@@ -26,6 +26,8 @@
 #include <math_Gauss.hxx>
 #include <math_Matrix.hxx>
 #include <math_Vector.hxx>
+#include <math_NotSquare.hxx>
+#include <math_Recipes.hxx>
 #include <Plate_FreeGtoCConstraint.hxx>
 #include <Plate_GlobalTranslationConstraint.hxx>
 #include <Plate_GtoCConstraint.hxx>
@@ -37,6 +39,200 @@
 #include <Plate_Plate.hxx>
 #include <Plate_SampledCurveConstraint.hxx>
 #include <Standard_ErrorHandler.hxx>
+#include <StdFail_NotDone.hxx>
+#include <Message_ProgressSentry.hxx>
+
+namespace
+{
+  const Standard_Integer math_Status_OK                  = 0;
+  const Standard_Integer math_Status_SingularMatrix      = 1;
+
+  // Given a matrix a(1..n, 1..n), this routine computes its LU decomposition, 
+  // The matrix a is replaced by this LU decomposition and the vector indx(1..n)
+  // is an output which records the row permutation effected by the partial
+  // pivoting; d is output as +1 or -1 depending on wether the number of row
+  // interchanges was even or odd.
+  
+  Standard_Integer LocalLUDecomposeWithProgress(math_Matrix& a, 
+                                        math_IntegerVector& indx, 
+                                        Standard_Real&   d, 
+                                        math_Vector& vv,
+                                        Standard_Real    TINY = 1.0e-30,
+                                        const Handle(Message_ProgressIndicator) & aProgress = NULL) { 
+
+     Standard_Integer i, imax=0, j, k;
+     Standard_Real big, dum, sum, temp;
+
+     Standard_Integer n = a.RowNumber();
+     d = 1.0;
+    
+    Message_ProgressSentry aPSentry(aProgress, "", 0, n +1, 1);
+
+     for(i = 1; i <= n; i++) {
+       big = 0.0;
+       for (j = 1; j <= n; j++) 
+         if((temp = fabs(a(i, j))) > big) big = temp;
+       if(big <= TINY) { 
+         return math_Status_SingularMatrix;
+       }
+       vv(i) = 1.0 / big;
+     }
+
+     aPSentry.Next();
+
+     for(j = 1; j <= n && aPSentry.More(); j++, aPSentry.Next()) {
+       for(i = 1; i < j; i++) {
+         sum = a(i,j);
+         for(k = 1; k < i; k++)
+	   sum -= a(i,k) * a(k,j);
+         a(i,j) = sum;
+       }
+       big = 0.0;
+       for(i = j; i <= n; i++) {
+         sum = a(i,j);
+         for(k = 1; k < j; k++) 
+           sum -= a(i,k) * a(k,j);
+         a(i,j) = sum;
+         // Note that comparison is made so as to have imax updated even if argument is NAN, Inf or IND, see #25559
+         if((dum = vv(i) * fabs(sum)) < big)
+         {
+           continue;
+         }
+         big = dum;
+         imax = i;
+       }
+       if(j != imax) {
+         for(k = 1; k <= n; k++) {
+           dum = a(imax,k);
+           a(imax,k) = a(j,k);
+           a(j,k) = dum;
+         }
+         d = -d;
+         vv(imax) = vv(j);
+       }
+       indx(j) = imax;
+       if(fabs(a(j, j)) <= TINY) {
+         return math_Status_SingularMatrix;
+       }
+       if(j != n) {
+         dum = 1.0 / (a(j,j));
+         for(i = j + 1; i <= n; i++)
+           a(i,j) *= dum;
+       }
+     }
+     return math_Status_OK;
+  }
+
+  //! This class implements the Gauss LU decomposition (Crout algorithm)
+  //! with partial pivoting (rows interchange) of a square matrix and
+  //! the different possible derived calculation with task progressing:
+  //! - solution of a set of linear equations.
+  //! - inverse of a matrix.
+  //! - determinant of a matrix.
+  class LocalGaussAlgoWithProgress
+  {
+  public:
+    DEFINE_STANDARD_ALLOC
+  
+    //! Given an input n X n matrix A this constructor performs its LU
+    //! decomposition with partial pivoting (interchange of rows).
+    //! This LU decomposition is stored internally and may be used to
+    //! do subsequent calculation.
+    //! If the largest pivot found is less than MinPivot the matrix A is
+    //! considered as singular.
+    //! Exception NotSquare is raised if A is not a square matrix.
+    LocalGaussAlgoWithProgress(const math_Matrix& A, const Standard_Real MinPivot = 1.0e-20, const Handle(Message_ProgressIndicator) & aProgress = NULL)
+      : LU (1, A.RowNumber(), 1, A.ColNumber()), 
+        Index (1, A.RowNumber()) {
+
+      math_NotSquare_Raise_if(A.RowNumber() != A.ColNumber(), " ");     
+      LU = A;
+      math_Vector vv(1, A.RowNumber());
+      Standard_Integer Error = LocalLUDecomposeWithProgress(LU, 
+                                  Index, 
+                                  D,
+                                  vv,
+                                  MinPivot,
+                                  aProgress);
+      if(!Error) {
+        Done = Standard_True;
+      }
+      else {
+        Done = Standard_False;
+      }
+    }
+
+    void Solve(const math_Vector& B, math_Vector& X) const{
+
+       StdFail_NotDone_Raise_if(!Done, " ");
+
+       X = B;
+       LU_Solve(LU,
+                Index,
+                X);
+    }
+
+    void Solve (math_Vector& X) const{
+
+       StdFail_NotDone_Raise_if(!Done, " ");
+
+       if(X.Length() != LU.RowNumber()) {
+         Standard_DimensionError::Raise();
+       }
+       LU_Solve(LU,
+                Index,
+                X);
+    }
+
+    Standard_Real Determinant() const{
+
+       StdFail_NotDone_Raise_if(!Done, " ");
+
+       Standard_Real Result = D;
+       for(Standard_Integer J = 1; J <= LU.UpperRow(); J++) {
+         Result *= LU(J,J);
+       }
+       return Result;
+    }
+
+    void Invert(math_Matrix& Inv) const{
+
+       StdFail_NotDone_Raise_if(!Done, " ");
+
+       Standard_DimensionError_Raise_if((Inv.RowNumber() != LU.RowNumber()) ||
+					(Inv.ColNumber() != LU.ColNumber()),
+					" ");
+
+       Standard_Integer LowerRow = Inv.LowerRow();
+       Standard_Integer LowerCol = Inv.LowerCol();
+       math_Vector Column(1, LU.UpperRow());
+
+       Standard_Integer I, J;
+       for(J = 1; J <= LU.UpperRow(); J++) {
+         for(I = 1; I <= LU.UpperRow(); I++) {
+           Column(I) = 0.0;
+         }
+         Column(J) = 1.0;
+         LU_Solve(LU, Index, Column);
+         for(I = 1; I <= LU.RowNumber(); I++) {
+           Inv(I+LowerRow-1,J+LowerCol-1) = Column(I);
+         }
+       }
+
+    }
+
+    inline Standard_Boolean IsDone() const { return Done; }
+
+protected:
+  Standard_Boolean Singular;
+  math_Matrix LU;
+  math_IntegerVector Index;
+  Standard_Real D;
+
+private:
+  Standard_Boolean Done;
+  };
+}
 
 //=======================================================================
 //function : Plate_Plate
@@ -249,7 +445,8 @@ void Plate_Plate::Load(const Plate_GlobalTranslationConstraint& GTConst)
 //=======================================================================
 
 void Plate_Plate::SolveTI(const Standard_Integer ord, 
-			  const Standard_Real anisotropie)
+			  const Standard_Real anisotropie, 
+          const Handle(Message_ProgressIndicator) & aProgress)
 {
   Standard_Integer IterationNumber=0;
   OK = Standard_False;
@@ -277,16 +474,15 @@ void Plate_Plate::SolveTI(const Standard_Integer ord,
   ddv[0] = 1;
   for(i=1;i<=9;i++) ddv[i] = ddv[i-1] / dv;
 
-
   if(myLScalarConstraints.IsEmpty())
     {
       if(myLXYZConstraints.IsEmpty())
-	SolveTI1(IterationNumber);
+	SolveTI1(IterationNumber, aProgress);
       else
-	SolveTI2(IterationNumber);
+	SolveTI2(IterationNumber, aProgress);
     }
   else
-    SolveTI3(IterationNumber);
+    SolveTI3(IterationNumber, aProgress);
 
 }
 
@@ -296,7 +492,7 @@ void Plate_Plate::SolveTI(const Standard_Integer ord,
 //           only PinPointConstraints are loaded
 //=======================================================================
 
-void Plate_Plate::SolveTI1(const Standard_Integer IterationNumber)
+void Plate_Plate::SolveTI1(const Standard_Integer IterationNumber, const Handle(Message_ProgressIndicator) & aProgress)
 {
 // computation of square matrix members
 
@@ -349,14 +545,20 @@ void Plate_Plate::SolveTI1(const Standard_Integer IterationNumber)
   Standard_Real pivot_max = 1.e-12;
   OK = Standard_True;     
 
-  math_Gauss algo_gauss(mat,pivot_max);
+  LocalGaussAlgoWithProgress algo_gauss(mat,pivot_max, aProgress);
+
+  if (!aProgress.IsNull() && aProgress->UserBreak())
+  {
+    return;
+  }
+
   if(!algo_gauss.IsDone()) {
     Standard_Integer nbm = order*(order+1)/2;
     for(i=n_el;i<n_el+nbm;i++) {
       mat(i,i) = 1.e-8;
     }
     pivot_max = 1.e-18;
-    math_Gauss thealgo(mat,pivot_max);
+    LocalGaussAlgoWithProgress thealgo(mat,pivot_max);
     algo_gauss = thealgo;
     OK = algo_gauss.IsDone();
   }
@@ -400,7 +602,7 @@ void Plate_Plate::SolveTI1(const Standard_Integer IterationNumber)
 //           LinearXYZ constraints are provided but no LinearScalar one
 //=======================================================================
 
-void Plate_Plate::SolveTI2(const Standard_Integer IterationNumber)
+void Plate_Plate::SolveTI2(const Standard_Integer IterationNumber, const Handle(Message_ProgressIndicator) & aProgress)
 {
 // computation of square matrix members
 
@@ -447,13 +649,19 @@ void Plate_Plate::SolveTI2(const Standard_Integer IterationNumber)
   Standard_Real pivot_max = 1.e-12;
   OK = Standard_True;      // ************ JHH
 
-  math_Gauss algo_gauss(mat,pivot_max);
+  LocalGaussAlgoWithProgress algo_gauss(mat,pivot_max, aProgress);
+  
+  if (!aProgress.IsNull() && aProgress->UserBreak ())
+  {
+    return;
+  }
+
   if(!algo_gauss.IsDone()) {
     for(i=nCC1+nCC2;i<n_dimat;i++) {
       mat(i,i) = 1.e-8;
     }
     pivot_max = 1.e-18;
-    math_Gauss thealgo1(mat,pivot_max);
+    LocalGaussAlgoWithProgress thealgo1(mat,pivot_max);
     algo_gauss = thealgo1; 
     OK = algo_gauss.IsDone();
   }
@@ -524,7 +732,7 @@ void Plate_Plate::SolveTI2(const Standard_Integer IterationNumber)
 //purpose  : to solve the set of constraints in the most general situation
 //=======================================================================
 
-void Plate_Plate::SolveTI3(const Standard_Integer IterationNumber)
+void Plate_Plate::SolveTI3(const Standard_Integer IterationNumber, const Handle(Message_ProgressIndicator) & aProgress)
 {
 // computation of square matrix members
 
@@ -705,7 +913,13 @@ void Plate_Plate::SolveTI3(const Standard_Integer IterationNumber)
   Standard_Real pivot_max = 1.e-12;
   OK = Standard_True;      // ************ JHH
 
-  math_Gauss algo_gauss(mat,pivot_max);
+  LocalGaussAlgoWithProgress algo_gauss(mat,pivot_max, aProgress);
+  
+  if (!aProgress.IsNull() && aProgress->UserBreak ())
+  {
+    return;
+  }
+
   if(!algo_gauss.IsDone()) {
     for(i=nCC1+nCC2;i<nCC1+nCC2+nbm;i++) {
       mat(i,i) = 1.e-8;
@@ -713,7 +927,7 @@ void Plate_Plate::SolveTI3(const Standard_Integer IterationNumber)
       mat(2*n_dimsousmat+i,2*n_dimsousmat+i) = 1.e-8;
     }
     pivot_max = 1.e-18;
-    math_Gauss thealgo2(mat,pivot_max);
+    LocalGaussAlgoWithProgress thealgo2(mat,pivot_max);
     algo_gauss = thealgo2;
     OK = algo_gauss.IsDone();
   }

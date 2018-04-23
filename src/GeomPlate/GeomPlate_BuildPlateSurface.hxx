@@ -46,6 +46,7 @@ class gp_Pnt;
 class Geom2d_Curve;
 class Adaptor3d_HCurve;
 class Adaptor2d_HCurve2d;
+class Message_ProgressIndicator;
 
 
 
@@ -130,7 +131,7 @@ public:
   //! Exceptions
   //! Standard_RangeError if the value of the constraint is
   //! null or if plate is not done.
-  Standard_EXPORT void Perform();
+  Standard_EXPORT void Perform(const Handle(Message_ProgressIndicator) & aProgress = NULL);
   
   //! returns the CurveConstraints of order order
   Standard_EXPORT Handle(GeomPlate_CurveConstraint) CurveConstraint (const Standard_Integer order) const;
