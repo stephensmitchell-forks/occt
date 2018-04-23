@@ -23,6 +23,7 @@
 #include <BRepAdaptor_HSurface.hxx>
 #include <BRepAdaptor_Curve.hxx>
 #include <Adaptor3d_IsoCurve.hxx>
+#include <Adaptor3d_HCurve.hxx>
 
 #include <BRep_ListIteratorOfListOfPointRepresentation.hxx>
 #include <BRep_PointRepresentation.hxx>
@@ -359,7 +360,120 @@ void BRepMesh_FastDiscretFace::add(const Handle(BRepMesh_FaceAttribute)& theAttr
   for ( Standard_Integer i = 1; i <= nbVertices; ++i )
     tabvert_corr(i) = i;
 
-  BRepMesh_Delaun trigu(myStructure, tabvert_corr);
+  Handle (Adaptor3d_HSurface) gFace (myAttribute->Surface ());
+  GeomAbs_SurfaceType thetype = gFace->GetType ();
+
+  while (thetype == GeomAbs_OffsetSurface)
+  {
+    gFace = gFace->BasisSurface ();
+    thetype = gFace->GetType ();
+  }
+
+  Standard_Real errorneousFactorU = myAttribute->GetDefFace () * 10.;
+  Standard_Real errorneousFactorV = myAttribute->GetDefFace () * 10.;
+
+  switch (thetype)
+  {
+  case GeomAbs_Plane: errorneousFactorU = errorneousFactorV = 1.; break;
+  case GeomAbs_Cylinder:
+  case GeomAbs_Cone:
+  case GeomAbs_Sphere:
+  case GeomAbs_Torus: break;
+  case GeomAbs_SurfaceOfExtrusion:
+  case GeomAbs_SurfaceOfRevolution:
+  {
+    Handle (Adaptor3d_HCurve) curve = gFace->BasisCurve ();
+    if (curve->GetType () == GeomAbs_BSplineCurve && curve->Degree () > 2)
+    {
+      errorneousFactorV /= (curve->Degree () * curve->NbKnots ());
+    }
+    break;
+  }
+  case GeomAbs_BezierSurface:
+  {
+    if (gFace->UDegree () > 2)
+    {
+      errorneousFactorU /= (gFace->UDegree ());
+    }
+    if (gFace->VDegree () > 2)
+    {
+      errorneousFactorV /= (gFace->VDegree ());
+    }
+    break;
+  }
+  case GeomAbs_BSplineSurface:
+  {
+    if (gFace->UDegree () > 2)
+    {
+      errorneousFactorU /= (gFace->UDegree () * gFace->NbUKnots ());
+    }
+    if (gFace->VDegree () > 2)
+    {
+      errorneousFactorV /= (gFace->VDegree () *  gFace->NbVKnots ());
+    }
+    break;
+  }
+  default: errorneousFactorU = errorneousFactorV = 1.;
+  }
+
+  Standard_Integer cellsCountU = (Standard_Integer)Ceiling (Pow (2, Log10 ((myAttribute->GetUMax () - myAttribute->GetUMin ()) / myAttribute->GetDeltaX () / errorneousFactorU)));
+  Standard_Integer cellsCountV = (Standard_Integer)Ceiling (Pow (2, Log10 ((myAttribute->GetVMax () - myAttribute->GetVMin ()) / myAttribute->GetDeltaY () / errorneousFactorV)));
+  if (thetype == GeomAbs_Plane)
+  {
+    cellsCountU = cellsCountV = (Standard_Integer)Ceiling (Pow (2, Log10 (nbVertices)));
+  }
+  else if (thetype == GeomAbs_Cylinder || thetype == GeomAbs_Cone)
+  {
+    if (!gFace->IsUPeriodic ())
+    {
+      cellsCountU = (Standard_Integer)Ceiling (Pow (2, Log10 (nbVertices)));
+    }
+    else
+    {
+      cellsCountV = (Standard_Integer)Ceiling (Pow (2, Log10 (nbVertices)));
+    }
+  }
+  else if (thetype == GeomAbs_SurfaceOfExtrusion)
+  {
+    // U is always a line
+    cellsCountU = (Standard_Integer)Ceiling (Pow (2, Log10 (nbVertices)));
+    Handle (Adaptor3d_HCurve) curve = gFace->BasisCurve ();
+    if (curve->GetType () == GeomAbs_Line || (curve->GetType () == GeomAbs_BSplineCurve && curve->Degree () < 2))
+    {
+      // planar case
+      cellsCountV = (Standard_Integer)Ceiling (Pow (2, Log10 (nbVertices)));
+    }
+  }
+  else if (thetype == GeomAbs_SurfaceOfRevolution)
+  {
+    Handle (Adaptor3d_HCurve) curve = gFace->BasisCurve ();
+    if (curve->GetType () == GeomAbs_Line || (curve->GetType () == GeomAbs_BSplineCurve && curve->Degree () < 2))
+    {
+      // planar, cylindrical, conical cases
+      cellsCountV = (Standard_Integer)Ceiling (Pow (2, Log10 (nbVertices)));
+    }
+  }
+  else if (thetype == GeomAbs_BezierSurface || thetype == GeomAbs_BSplineSurface)
+  {
+    if (gFace->UDegree () < 2)
+    {
+      cellsCountU = (Standard_Integer)Ceiling (Pow (2, Log10 (nbVertices)));
+    }
+    if (gFace->VDegree () < 2)
+    {
+      cellsCountV = (Standard_Integer)Ceiling (Pow (2, Log10 (nbVertices)));
+    }
+  }
+
+  cellsCountU = Max (cellsCountU, 2);
+  cellsCountV = Max (cellsCountV, 2);
+  if (thetype == GeomAbs_OtherSurface)
+  {
+    // fallback to the default behavior
+    cellsCountU = cellsCountV = -1;
+  }
+
+  BRepMesh_Delaun trigu(myStructure, tabvert_corr, cellsCountU, cellsCountV);
 
   //removed all free edges from triangulation
   const Standard_Integer nbLinks = myStructure->NbLinks();
@@ -375,9 +489,6 @@ void BRepMesh_FastDiscretFace::add(const Handle(BRepMesh_FaceAttribute)& theAttr
       myStructure->RemoveLink(i);
     }
   }
-
-  const Handle(BRepAdaptor_HSurface)& gFace = myAttribute->Surface();
-  GeomAbs_SurfaceType thetype = gFace->GetType();
 
   Standard_Boolean rajout = 
     (thetype == GeomAbs_Sphere || thetype == GeomAbs_Torus);
