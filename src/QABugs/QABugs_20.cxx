@@ -2531,6 +2531,136 @@ static Standard_Integer OCC28131 (Draw_Interpretor&, Standard_Integer theNbArgs,
   return 0;
 }
 
+#include <BRepOffsetAPI_MakeEvolved.hxx>
+#include <ShapeFix_Wireframe.hxx>
+static Standard_Integer myCall(Draw_Interpretor&, Standard_Integer theNbArgs, const char** theArgVec)
+{
+  TopoDS_Wire extrudeWire = TopoDS::Wire(DBRep::Get(theArgVec[2]));
+  TopoDS_Wire toolWire = TopoDS::Wire(DBRep::Get(theArgVec[3]));
+
+  // ################################ Check and Fix Wire Gaps #########################################
+  if (1)
+  {
+    ShapeFix_Wireframe fix_tool(extrudeWire);
+    fix_tool.ModeDropSmallEdges() = Standard_True;
+    fix_tool.SetPrecision(Precision::Confusion()); //yes!
+    fix_tool.FixSmallEdges();
+    fix_tool.FixWireGaps();
+    extrudeWire = TopoDS::Wire(fix_tool.Shape());
+  }
+
+  // ################################ Extrude tool #########################################
+  BRepOffsetAPI_MakeEvolved mkEvolved = BRepOffsetAPI_MakeEvolved(extrudeWire, toolWire, GeomAbs_Arc, Standard_False, Standard_True, Standard_False, Standard_True, 0);
+
+  DBRep::Set(theArgVec[1], mkEvolved.Shape());
+
+  return 0;
+}
+
+//=======================================================================
+//function : FindGaps
+//purpose  : 
+//=======================================================================
+static Standard_Integer FindGaps(Draw_Interpretor& theDI, Standard_Integer theNArg, const char** theArgV)
+{
+  if (theNArg < 3)
+  {
+    theDI << "Use: " << theArgV[0] << " result wire\n";
+    return 1;
+  }
+
+  const TopoDS_Wire aWir = TopoDS::Wire(DBRep::Get(theArgV[2]));
+
+  TopTools_IndexedDataMapOfShapeListOfShape aMapVE;
+  TopExp::MapShapesAndAncestors(aWir, TopAbs_VERTEX, TopAbs_EDGE, aMapVE);
+
+  Standard_Real aMaxDist = RealFirst();
+
+  for (Standard_Integer i = 1; i <= aMapVE.Extent(); i++)
+  {
+    const TopoDS_Vertex &aV = TopoDS::Vertex(aMapVE.FindKey(i));
+
+    TopTools_ListOfShape aLE = aMapVE.FindFromIndex(i);
+
+    const TopoDS_Edge anE1 = TopoDS::Edge(aLE.First());
+    const TopoDS_Edge anE2 = TopoDS::Edge(aLE.Last());
+
+    const BRepAdaptor_Curve anAC1(anE1), anAC2(anE2);
+
+    const Standard_Real aPrm1 = BRep_Tool::Parameter(aV, anE1);
+    const Standard_Real aPrm2 = BRep_Tool::Parameter(aV, anE2);
+
+    gp_Pnt aP1, aP2;
+    anAC1.D0(aPrm1, aP1);
+    anAC2.D0(aPrm2, aP2);
+
+    char aBuff[100];
+    Sprintf(aBuff, "%sv%d", theArgV[1], i);
+    DBRep::Set(aBuff, aV);
+
+    const Standard_Real aDist = aP1.Distance(aP2);
+    aMaxDist = Max(aMaxDist, aDist);
+
+    theDI << aBuff << ": Dist = " << aDist << "\n";
+  }
+
+  theDI << "Max. gap is " << aMaxDist << "\n";
+
+  return 0;
+}
+
+//=======================================================================
+//function : VEProcess
+//purpose  : 
+//=======================================================================
+static Standard_Integer VEProcess(Draw_Interpretor& theDI, Standard_Integer theNArg, const char** theArgV)
+{
+  if (theNArg < 3)
+  {
+    theDI << "Use: " << theArgV[0] << " result wire\n";
+    return 1;
+  }
+
+  const TopoDS_Wire aWir = TopoDS::Wire(DBRep::Get(theArgV[2]));
+
+  TopTools_IndexedDataMapOfShapeListOfShape aMapVE;
+  TopExp::MapShapesAndAncestors(aWir, TopAbs_VERTEX, TopAbs_EDGE, aMapVE);
+
+  for (Standard_Integer i = 1; i <= aMapVE.Extent(); i++)
+  {
+    const TopoDS_Vertex &aV = TopoDS::Vertex(aMapVE.FindKey(i));
+
+    TopTools_ListOfShape aLE = aMapVE.FindFromIndex(i);
+
+    const TopoDS_Edge anE1 = TopoDS::Edge(aLE.First());
+    const TopoDS_Edge anE2 = TopoDS::Edge(aLE.Last());
+
+    const BRepAdaptor_Curve anAC1(anE1), anAC2(anE2);
+
+    const Standard_Real aPrm1 = BRep_Tool::Parameter(aV, anE1);
+    const Standard_Real aPrm2 = BRep_Tool::Parameter(aV, anE2);
+
+    gp_Pnt aP;
+    gp_Vec aT1, aT2;
+    anAC1.D1(aPrm1, aP, aT1);
+    anAC2.D1(aPrm2, aP, aT2);
+
+    Standard_Real anAngle = aT1.Angle(aT2);
+
+    if (anAngle > M_PI_2)
+      anAngle = M_PI - anAngle;
+
+    char aBuff[100];
+    Sprintf(aBuff, "%sv%d", theArgV[1], i);
+    DBRep::Set(aBuff, aV);
+
+    theDI << aBuff << " (" << BRep_Tool::Tolerance(aV) << "): A = " << anAngle << "\n";
+  }
+
+  return 0;
+}
+
+
 void QABugs::Commands_20(Draw_Interpretor& theCommands) {
   const char *group = "QABugs";
 
@@ -2559,6 +2689,11 @@ void QABugs::Commands_20(Draw_Interpretor& theCommands) {
                   "\n\t\t: Check interface for reading BRep from memory.",
                   __FILE__, OCC28887, group);
   theCommands.Add("OCC28131", "OCC28131 name: creates face problematic for offset", __FILE__, OCC28131, group);
+
+  theCommands.Add("myCall", "myCall result spine profile", __FILE__, myCall, group);
+
+  theCommands.Add("findgaps", "findgaps result wire", __FILE__, FindGaps, group);
+  theCommands.Add("veproc", "veproc result wire", __FILE__, VEProcess, group);
 
   return;
 }

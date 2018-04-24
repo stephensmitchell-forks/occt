@@ -57,14 +57,20 @@
 #include <ShapeFix_Shape.hxx>
 #include <BRepClass_FaceClassifier.hxx>
 #include <BRepGProp_Face.hxx>
+#include <BinTools.hxx>
 
 static const Standard_Real aPipeLinearTolerance = 1.0e-4;
 static const Standard_Real aPipeAngularTolerance = 1.0e-2;
+
+static const Standard_Boolean isParallelComputation = Standard_False;
+const char aDirPatch[] = "D:\\nbv-29523\\shapes\\my\\";
 
 static Standard_Boolean CheckSingularityAndAdd(const TopoDS_Face& theF,
                                                const Standard_Real theFuzzyToler,
                                                TopTools_ListOfShape& theListOfFaces,
                                                TopTools_ListOfShape& theListOfSplits);
+
+#define BREPFILL_VOLUVED_DEBUG
 
 //=======================================================================
 //function : GetSpineAndProfile
@@ -332,14 +338,49 @@ void BRepFill_Voluved::Perform(const TopoDS_Wire& theSpine,
     myFuzzyValue = theTolerance;
   }
 
+#ifdef BREPFILL_VOLUVED_DEBUG
+  char aBuff[10000];
+  Sprintf(aBuff, "%s%s", aDirPatch, "spine.nbv");
+  BinTools::Write(theSpine, aBuff);
+  Sprintf(aBuff, "%s%s", aDirPatch, "profile.nbv");
+  BinTools::Write(theProfile, aBuff);
+
+  std::streamsize aPrecVal = std::cout.precision();
+
+  std::cout.precision(15);
+
+  std::cout << "++++ Dump of Spine" << std::endl;
+  BRepTools::Dump(theSpine, std::cout);
+  std::cout << "---- Dump of Spine" << std::endl;
+
+  std::cout << "++++ Dump of Profile" << std::endl;
+  BRepTools::Dump(theProfile, std::cout);
+  std::cout << "---- Dump of Profile" << std::endl;
+
+  std::cout.precision(aPrecVal);
+#endif
+
   GetSpineAndProfile(theSpine, theProfile);
 
   myPipeShell.Nullify();
   myTopBottom.Nullify();
   myResult.Nullify();
 
+#ifdef BREPFILL_VOLUVED_DEBUG
+  std::cout << "Start Evolved. Toler = " << myFuzzyValue << std::endl;
+#endif
+
   PerformSweep();
+
+#ifdef BREPFILL_VOLUVED_DEBUG
+  std::cout << "PerformSweep complete. Status = " << myErrorStatus << std::endl;
+#endif
+  
   GetLids();
+
+#ifdef BREPFILL_VOLUVED_DEBUG
+  std::cout << "GetLids complete. Status = " << myErrorStatus << std::endl;
+#endif
 
   if ((myErrorStatus != BRepFill_Voluved_NotSolid) && !theSolidReq)
   {
@@ -457,7 +498,7 @@ void BRepFill_Voluved::GetLids()
   // Split interfered edges
   BOPAlgo_PaveFiller aPF;
   aPF.SetArguments(aLE);
-  aPF.SetRunParallel(Standard_True);
+  aPF.SetRunParallel(isParallelComputation);
 
   aPF.Perform();
   if (aPF.HasErrors())
@@ -474,7 +515,7 @@ void BRepFill_Voluved::GetLids()
     aBuilder.AddArgument(aS);
   }
 
-  aBuilder.SetRunParallel(Standard_True);
+  aBuilder.SetRunParallel(isParallelComputation);
   aBuilder.PerformWithFiller(aPF);
   if (aBuilder.HasErrors())
   {
@@ -689,8 +730,21 @@ void BRepFill_Voluved::BuildSolid()
 
   Handle(ShapeFix_Shape) aSFix = new ShapeFix_Shape;
   aSFix->Init(myPipeShell);
+
+#ifdef BREPFILL_VOLUVED_DEBUG
+  char aBuff[10000];
+  Sprintf(aBuff, "%s%s", aDirPatch, "shape1.nbv");
+  BinTools::Write(myPipeShell, aBuff);
+#endif
+
+
   aSFix->Perform();
   myPipeShell = aSFix->Shape();
+
+#ifdef BREPFILL_VOLUVED_DEBUG
+  Sprintf(aBuff, "%s%s", aDirPatch, "shape2.nbv");
+  BinTools::Write(myPipeShell, aBuff);
+#endif
 
   for (anExpF.Init(myPipeShell, TopAbs_FACE);
        anExpF.More(); anExpF.Next())
@@ -716,10 +770,25 @@ void BRepFill_Voluved::BuildSolid()
       aLF.Append(aF);
     }
 
+#ifdef BREPFILL_VOLUVED_DEBUG
+    BRep_Builder aBB;
+    TopoDS_Compound aDebComp;
+    aBB.MakeCompound(aDebComp);
+    TopTools_ListIteratorOfListOfShape anItrDeb(aLF);
+    for (; anItrDeb.More(); anItrDeb.Next())
+    {
+      const TopoDS_Face &aF = TopoDS::Face(anItrDeb.Value());
+      aBB.Add(aDebComp, aF);
+    }
+
+    Sprintf(aBuff, "%s%s", aDirPatch, "shape3.nbv");
+    BinTools::Write(aDebComp, aBuff);
+#endif
+
     // Split interfered faces
     BOPAlgo_PaveFiller aPF;
     aPF.SetArguments(aLF);
-    aPF.SetRunParallel(Standard_True);
+    aPF.SetRunParallel(isParallelComputation);
     aPF.SetFuzzyValue(myFuzzyValue);
 
     aPF.Perform();
@@ -733,11 +802,16 @@ void BRepFill_Voluved::BuildSolid()
         aBuilder.AddArgument(aS);
       }
 
-      aBuilder.SetRunParallel(Standard_True);
+      aBuilder.SetRunParallel(isParallelComputation);
       aBuilder.PerformWithFiller(aPF);
       myPipeShell = aBuilder.Shape();
     }
   }
+
+#ifdef BREPFILL_VOLUVED_DEBUG
+  Sprintf(aBuff, "%s%s", aDirPatch, "shape4.nbv");
+  BinTools::Write(myPipeShell, aBuff);
+#endif
 
   aLF.Clear();
   aMapF.Clear();
@@ -761,11 +835,26 @@ void BRepFill_Voluved::BuildSolid()
     }
   }
   
+#ifdef BREPFILL_VOLUVED_DEBUG
+  BRep_Builder aBB;
+  TopoDS_Compound aDebComp;
+  aBB.MakeCompound(aDebComp);
+  TopTools_ListIteratorOfListOfShape anItrDeb(aLF);
+  for (; anItrDeb.More(); anItrDeb.Next())
+  {
+    const TopoDS_Face &aF = TopoDS::Face(anItrDeb.Value());
+    aBB.Add(aDebComp, aF);
+  }
+
+  Sprintf(aBuff, "%s%s", aDirPatch, "shape5.nbv");
+  BinTools::Write(aDebComp, aBuff);
+#endif
+
   BOPAlgo_MakerVolume aMV;
   aMV.SetArguments(aLF);
   aMV.SetFuzzyValue(myFuzzyValue);
   aMV.SetIntersect(Standard_True);
-  aMV.SetRunParallel(Standard_True);
+  aMV.SetRunParallel(isParallelComputation);
   aMV.SetAvoidInternalShapes(Standard_True);
   aMV.Perform();
 
@@ -775,6 +864,11 @@ void BRepFill_Voluved::BuildSolid()
   }
   
   myResult = aMV.Shape();
+
+#ifdef BREPFILL_VOLUVED_DEBUG
+  std::cout << "BuildSolid After VM." << std::endl;
+#endif
+
   RemoveExcessSolids(aLSplits, myResult, aLF, aMV);
 
   myErrorStatus = BRepFill_Voluved_OK;
@@ -812,7 +906,7 @@ void BRepFill_Voluved::ExtractOuterSolid(TopoDS_Shape& theShape,
   BOPAlgo_MakerVolume aMV;
   aMV.SetArguments(theArgsList);
   aMV.SetIntersect(Standard_True);
-  aMV.SetRunParallel(Standard_True);
+  aMV.SetRunParallel(isParallelComputation);
   aMV.SetAvoidInternalShapes(Standard_True);
   aMV.Perform();
 
@@ -1525,7 +1619,7 @@ Standard_Boolean CheckSingularityAndAdd(const TopoDS_Face& theF,
     // Split interfered edges
     BOPAlgo_PaveFiller aPF;
     aPF.SetArguments(aLE);
-    aPF.SetRunParallel(Standard_True);
+    aPF.SetRunParallel(isParallelComputation);
 
     aPF.Perform();
     if (aPF.HasErrors())
@@ -1550,7 +1644,7 @@ Standard_Boolean CheckSingularityAndAdd(const TopoDS_Face& theF,
       aBuilder.AddArgument(aS);
     }
 
-    aBuilder.SetRunParallel(Standard_True);
+    aBuilder.SetRunParallel(isParallelComputation);
     aBuilder.PerformWithFiller(aPF);
     if (aBuilder.HasErrors())
     {
@@ -1635,7 +1729,7 @@ Standard_Boolean CheckSingularityAndAdd(const TopoDS_Face& theF,
       aBAB.AddArgument(aSh);
     }
 
-    aBAB.SetRunParallel(Standard_True);
+    aBAB.SetRunParallel(isParallelComputation);
     aBAB.SetNonDestructive(Standard_True);
     aBAB.PerformWithFiller(aPF);
     if (aBAB.HasErrors())
