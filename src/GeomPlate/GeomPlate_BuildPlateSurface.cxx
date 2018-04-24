@@ -637,98 +637,90 @@ void GeomPlate_BuildPlateSurface::Perform(const Handle(Message_ProgressIndicator
 	  cout<<"CourbMax="<<myG2Error<<endl;
       }
 #endif
-    NbBoucle++;
-    if (NTLinCont!=0)
-	{ 
-        //====================================================================
-	    // Calcul le nombre de point total et le maximum de points par courbe
-	    //====================================================================
-        Standard_Integer NPointMax=0;
-	    for (Standard_Integer i=1;i<=NTLinCont;i++) 
-	        if ((myLinCont->Value(i)->NbPoints())>NPointMax)
-	            NPointMax=(Standard_Integer )( myLinCont->Value(i)->NbPoints()); 
+      NbBoucle++;
+      if (NTLinCont!=0)
+	{ //====================================================================
+	  // Calcul le nombre de point total et le maximum de points par courbe
+	  //====================================================================
+	  Standard_Integer NPointMax=0;
+	  for (Standard_Integer i=1;i<=NTLinCont;i++) 
+	    if ((myLinCont->Value(i)->NbPoints())>NPointMax)
+	      NPointMax=(Standard_Integer )( myLinCont->Value(i)->NbPoints()); 
+	  //====================================================================
+	  // Discretisation des courbes
+	  //====================================================================
+	  Discretise(PntInter,  PntG1G1);  
+	  //====================================================================
+	  //Preparation des points de contrainte pour plate
+	  //====================================================================
+	  LoadCurve( NbBoucle );
+	  if ( myPntCont->Length() != 0)
+	    LoadPoint( NbBoucle );
+	  //====================================================================
+	  //Resolution de la surface
+	  //====================================================================
 
-	    //====================================================================
-	    // Discretisation des courbes
-	    //====================================================================
-	    Discretise(PntInter,  PntG1G1);  
+	  myPlate.SolveTI(myDegree, ComputeAnisotropie(), aProgress);
 
-	    //====================================================================
-	    //Preparation des points de contrainte pour plate
-	    //====================================================================
-	    LoadCurve( NbBoucle );
-	    if ( myPntCont->Length() != 0)
-        {
-	        LoadPoint( NbBoucle );
-        }
+	  if (!aProgress.IsNull() && aProgress->UserBreak())
+	  {
+	    return;
+	  }
 
-	    //====================================================================
-	    // Resolution de la surface
-	    //====================================================================
-
-        myPlate.SolveTI(myDegree, ComputeAnisotropie(), aProgress);
-
-        if (!aProgress.IsNull() && aProgress->UserBreak())
-        {
-            return;
-        }
-
-        if (!myPlate.IsDone())
-        {
+          if (!myPlate.IsDone())
+          {
 #ifdef OCCT_DEBUG
             cout << "WARNING : GeomPlate : abort calcul of Plate." << endl;
 #endif
             return;
-        }
+          }
 
-        myGeomPlateSurface = new GeomPlate_Surface(mySurfInit,myPlate);
-	    Standard_Real Umin,Umax,Vmin,Vmax; 
-        myPlate.UVBox(Umin,Umax,Vmin,Vmax);
-	    myGeomPlateSurface->SetBounds(Umin,Umax,Vmin,Vmax);
+          myGeomPlateSurface = new GeomPlate_Surface(mySurfInit,myPlate);
+	  Standard_Real Umin,Umax,Vmin,Vmax; 
+          myPlate.UVBox(Umin,Umax,Vmin,Vmax);
+	  myGeomPlateSurface->SetBounds(Umin,Umax,Vmin,Vmax);
 
-	    Fini = VerifSurface(NbBoucle);
-	    if ((NbBoucle >= myNbIter)&&(!Fini))
+	  Fini = VerifSurface(NbBoucle);
+	  if ((NbBoucle >= myNbIter)&&(!Fini))
 	    { 
 #ifdef OCCT_DEBUG
-	        cout<<"Warning objectif non atteint"<<endl;
+	      cout<<"Warning objectif non atteint"<<endl;
 #endif
-	        Fini = Standard_True;
+	      Fini = Standard_True;
 	    }
 
-	    if ((NTPntCont != 0)&&(Fini))
-	    { 
-            Standard_Real di,an,cu;
-	        VerifPoints(di,an,cu);
+	  if ((NTPntCont != 0)&&(Fini))
+	    { Standard_Real di,an,cu;
+	      VerifPoints(di,an,cu);
 	    }
 	}
-    else
-    { 
-        LoadPoint( NbBoucle );
-        //====================================================================
-        // Resolution de la surface
-        //====================================================================
-        myPlate.SolveTI(myDegree, ComputeAnisotropie(), aProgress);
+      else
+	{ LoadPoint( NbBoucle );
+	  //====================================================================
+	  //Resolution de la surface
+	  //====================================================================
+	  myPlate.SolveTI(myDegree, ComputeAnisotropie(), aProgress);
 
-        if (!aProgress.IsNull() && aProgress->UserBreak())
-        {
-            return;
-        }
+	  if (!aProgress.IsNull() && aProgress->UserBreak())
+	  {
+	    return;
+	  }
 
-        if (!myPlate.IsDone())
-        {
+          if (!myPlate.IsDone())
+          {
 #ifdef OCCT_DEBUG
             cout << "WARNING : GeomPlate : abort calcul of Plate." << endl;
 #endif
             return;
-        }
+          }
 
-        myGeomPlateSurface = new GeomPlate_Surface(mySurfInit,myPlate);
-        Standard_Real Umin,Umax,Vmin,Vmax; 
-        myPlate.UVBox(Umin,Umax,Vmin,Vmax);
-        myGeomPlateSurface->SetBounds(Umin,Umax,Vmin,Vmax);
-        Fini = Standard_True;
-        Standard_Real di,an,cu;
-        VerifPoints(di,an,cu);
+          myGeomPlateSurface = new GeomPlate_Surface(mySurfInit,myPlate);
+	  Standard_Real Umin,Umax,Vmin,Vmax; 
+          myPlate.UVBox(Umin,Umax,Vmin,Vmax);
+	  myGeomPlateSurface->SetBounds(Umin,Umax,Vmin,Vmax);
+	  Fini = Standard_True;
+          Standard_Real di,an,cu;
+          VerifPoints(di,an,cu);
 	}
     } while (!Fini); // Fin boucle pour meilleur surface
 #ifdef OCCT_DEBUG
