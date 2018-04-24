@@ -489,7 +489,7 @@ void GeomPlate_BuildPlateSurface::Perform(const Handle(Message_ProgressIndicator
   // Surface Initiale
   //======================================================================
   if (!mySurfInitIsGive)
-    ComputeSurfInit();
+    ComputeSurfInit(aProgress);
 
   else {
    if (NTLinCont>=2)
@@ -660,12 +660,12 @@ void GeomPlate_BuildPlateSurface::Perform(const Handle(Message_ProgressIndicator
 	  //Resolution de la surface
 	  //====================================================================
 
-	  myPlate.SolveTI(myDegree, ComputeAnisotropie(), aProgress);
+        myPlate.SolveTI(myDegree, ComputeAnisotropie(), aProgress);
 
-      if (!aProgress.IsNull() && aProgress->UserBreak())
-      {
-        return;
-      }
+        if (!aProgress.IsNull() && aProgress->UserBreak())
+        {
+            return;
+        }
 
           if (!myPlate.IsDone())
           {
@@ -695,27 +695,34 @@ void GeomPlate_BuildPlateSurface::Perform(const Handle(Message_ProgressIndicator
 	      VerifPoints(di,an,cu);
 	    }
 	}
-      else
-	{ LoadPoint( NbBoucle );
-	  //====================================================================
-	  //Resolution de la surface
-	  //====================================================================
-	  myPlate.SolveTI(myDegree, ComputeAnisotropie());
-          if (!myPlate.IsDone())
-          {
+    else
+    { 
+        LoadPoint( NbBoucle );
+        //====================================================================
+        // Resolution de la surface
+        //====================================================================
+        myPlate.SolveTI(myDegree, ComputeAnisotropie(), aProgress);
+
+        if (!aProgress.IsNull() && aProgress->UserBreak())
+        {
+            return;
+        }
+
+        if (!myPlate.IsDone())
+        {
 #ifdef OCCT_DEBUG
             cout << "WARNING : GeomPlate : abort calcul of Plate." << endl;
 #endif
             return;
-          }
+        }
 
-          myGeomPlateSurface = new GeomPlate_Surface(mySurfInit,myPlate);
-	  Standard_Real Umin,Umax,Vmin,Vmax; 
-          myPlate.UVBox(Umin,Umax,Vmin,Vmax);
-	  myGeomPlateSurface->SetBounds(Umin,Umax,Vmin,Vmax);
-	  Fini = Standard_True;
-          Standard_Real di,an,cu;
-          VerifPoints(di,an,cu);
+        myGeomPlateSurface = new GeomPlate_Surface(mySurfInit,myPlate);
+        Standard_Real Umin,Umax,Vmin,Vmax; 
+        myPlate.UVBox(Umin,Umax,Vmin,Vmax);
+        myGeomPlateSurface->SetBounds(Umin,Umax,Vmin,Vmax);
+        Fini = Standard_True;
+        Standard_Real di,an,cu;
+        VerifPoints(di,an,cu);
 	}
     } while (!Fini); // Fin boucle pour meilleur surface
 #ifdef OCCT_DEBUG
@@ -1362,7 +1369,7 @@ Standard_Boolean GeomPlate_BuildPlateSurface::
 // il y a des contraintes ponctuelles
 //-------------------------------------------------------------------------
 
-void GeomPlate_BuildPlateSurface::ComputeSurfInit()
+void GeomPlate_BuildPlateSurface::ComputeSurfInit(const Handle(Message_ProgressIndicator) & aProgress)
 {
   Standard_Integer nopt=2, popt=2, Np=1;
   Standard_Boolean isHalfSpace = Standard_True;
@@ -1727,7 +1734,12 @@ void GeomPlate_BuildPlateSurface::ComputeSurfInit()
       //====================================================================
       //Resolution de la surface
       //====================================================================
-      myPlate.SolveTI(2, ComputeAnisotropie());
+      myPlate.SolveTI(2, ComputeAnisotropie(), aProgress);
+      if (!aProgress.IsNull() && aProgress->UserBreak())
+      {
+          return;
+      }
+
       if (!myPlate.IsDone())
       {
 #ifdef OCCT_DEBUG

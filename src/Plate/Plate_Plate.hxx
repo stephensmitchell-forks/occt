@@ -30,7 +30,7 @@
 #include <Standard_Real.hxx>
 #include <TColgp_HArray2OfXYZ.hxx>
 #include <TColgp_SequenceOfXY.hxx>
-#include <Message_ProgressIndicator.hxx>
+
 class Plate_PinpointConstraint;
 class Plate_LinearXYZConstraint;
 class Plate_LinearScalarConstraint;
@@ -43,6 +43,7 @@ class Plate_FreeGtoCConstraint;
 class gp_XYZ;
 class gp_XY;
 class math_Matrix;
+class Message_ProgressIndicator;
 
 
 //! This class implement a variationnal spline algorithm able
@@ -83,7 +84,7 @@ Plate_Plate& operator= (const Plate_Plate& Ref)
   
   Standard_EXPORT void Load (const Plate_FreeGtoCConstraint& FGtoCConst);
   
-  Standard_EXPORT void SolveTI (const Standard_Integer ord = 4, const Standard_Real anisotropie = 1.0, const Handle(Message_ProgressIndicator) & aProgress = NULL);
+  Standard_EXPORT void SolveTI (const Standard_Integer ord = 4, const Standard_Real anisotropie = 1.0, const Handle(Message_ProgressIndicator) & aProgress = Handle(Message_ProgressIndicator)());
   
   //! returns True if all has been correctly done.
   Standard_EXPORT Standard_Boolean IsDone() const;
