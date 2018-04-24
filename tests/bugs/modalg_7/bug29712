@@ -1,0 +1,20 @@
+puts "========"
+puts "OCC29712"
+puts "========"
+puts ""
+#################################################
+# General Fuse operation with the attached shapes fails
+#################################################
+
+restore [locate_data_file bug29712_edge.brep] ee
+restore [locate_data_file bug29712_face.brep] ff
+
+bclearobjects
+bcleartools
+
+baddobjects ee
+baddtools ff
+
+if { [regexp {Warning} [ bfillds ]] } {
+  puts "Error. GF algorithm fails"
+}
