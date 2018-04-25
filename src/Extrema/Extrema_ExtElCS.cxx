@@ -161,7 +161,8 @@ void Extrema_ExtElCS::Perform(const gp_Lin& C,
         else
           myNbExt += ExPS.NbExt();
 
-          for (i = aStartIdx + 1; i <= myNbExt; i++) {
+        for (i = aStartIdx + 1; i <= myNbExt; i++)
+        {
           myPoint1->SetValue(i, myPOnC2);
           myPoint2->SetValue(i, ExPS.Point(i - aStartIdx));
           mySqDist->SetValue(i, (myPOnC2.Value()).SquareDistance(ExPS.Point(i - aStartIdx).Value()));
@@ -172,40 +173,54 @@ void Extrema_ExtElCS::Perform(const gp_Lin& C,
     myDone = Standard_True;
   }
 
-  if (!isParallel)
-    return;
-
-  // Line direction is similar to cylinder axis of rotation.
-  mySqDist = new TColStd_HArray1OfReal(1, 1);
-  myPoint1 = new Extrema_HArray1OfPOnCurv(1, 1);
-  myPoint2 = new Extrema_HArray1OfPOnSurf(1, 1);
-  Standard_Real aDist = sqrt(Extrem.SquareDistance(1)) - radius;
-  mySqDist->SetValue(1, aDist * aDist);
-  Standard_Real u, v, w;
-  gp_Vec aVec(LineOrig, Origin);
-  gp_Vec aDirVec(C.Direction());
-  w = aVec*aDirVec;
-  gp_Pnt LinPoint = LineOrig.Translated(w * aDirVec);
-  Extrema_POnCurv PonC(w, LinPoint);
-  myPoint1->SetValue(1, PonC);
-  gp_Pnt CylPoint;
-  gp_Vec OrigToLine(Origin, LinPoint);
-  if (OrigToLine.Magnitude() <= gp::Resolution())
+  if (isParallel)
   {
-    u = 0.;
-    v = 0.;
-    CylPoint = ElSLib::Value(u, v, S);
+    // Line direction is similar to cylinder axis of rotation.
+    // The case is possible when extrema returned not parallel status
+    // (i.e. there are several extremas) but IntAna_IntConicQuad
+    // returned InfiniteSolution. Here in this case we will return
+    // extrema with the lowest distance as a final solution.
+    mySqDist = new TColStd_HArray1OfReal(1, 1);
+    myPoint1 = new Extrema_HArray1OfPOnCurv(1, 1);
+    myPoint2 = new Extrema_HArray1OfPOnSurf(1, 1);
+    Standard_Real aDist = Extrem.SquareDistance(1);
+    for (Standard_Integer i = 2; i <= Extrem.NbExt(); i++)
+    {
+      const Standard_Real aD = Extrem.SquareDistance(i);
+      if (aD < aDist)
+      {
+        aDist = aD;
+      }
+    }
+      
+    aDist = sqrt(aDist) - radius;
+    mySqDist->SetValue(1, aDist * aDist);
+    Standard_Real u, v, w;
+    gp_Vec aVec(LineOrig, Origin);
+    gp_Vec aDirVec(C.Direction());
+    w = aVec*aDirVec;
+    gp_Pnt LinPoint = LineOrig.Translated(w * aDirVec);
+    Extrema_POnCurv PonC(w, LinPoint);
+    myPoint1->SetValue(1, PonC);
+    gp_Pnt CylPoint;
+    gp_Vec OrigToLine(Origin, LinPoint);
+    if (OrigToLine.Magnitude() <= gp::Resolution())
+    {
+      u = 0.;
+      v = 0.;
+      CylPoint = ElSLib::Value(u, v, S);
+    }
+    else
+    {
+      OrigToLine.Normalize();
+      CylPoint = Origin.Translated(radius * OrigToLine);
+      ElSLib::CylinderParameters(Pos, radius, CylPoint, u, v);
+    }
+    Extrema_POnSurf PonS(u, v, CylPoint);
+    myPoint2->SetValue(1, PonS);
+    myDone = Standard_True;
+    myIsPar = Standard_True;
   }
-  else
-  {
-    OrigToLine.Normalize();
-    CylPoint = Origin.Translated(radius * OrigToLine);
-    ElSLib::CylinderParameters(Pos, radius, CylPoint, u, v);
-  }
-  Extrema_POnSurf PonS(u, v, CylPoint);
-  myPoint2->SetValue(1, PonS);
-  myDone = Standard_True;
-  myIsPar = Standard_True;
 }
 
 
@@ -424,12 +439,12 @@ void Extrema_ExtElCS::Perform(const gp_Circ& C,
     }
   }
   
-  if (!isParallel)
-    return;
-
-  mySqDist = new TColStd_HArray1OfReal(1, 1);
-  mySqDist->SetValue(1, S.SquareDistance(C.Location()));
-  myIsPar = Standard_True;
+  if (isParallel)
+  {
+    mySqDist = new TColStd_HArray1OfReal(1, 1);
+    mySqDist->SetValue(1, S.SquareDistance(C.Location()));
+    myIsPar = Standard_True;
+  }
 }
 
 Extrema_ExtElCS::Extrema_ExtElCS(const gp_Circ& C,
@@ -549,14 +564,28 @@ void Extrema_ExtElCS::Perform(const gp_Circ& C,
 
   myDone = Standard_True;
 
-  if (!isParallel)
-    return;
+  if (isParallel)
+  {
+    // The case is possible when extrema returned not parallel status
+    // (i.e. there are several extremas) but IntAna_IntConicQuad
+    // returned InfiniteSolution. Here in this case we will return
+    // extrema with the lowest distance as a final solution.
 
-  myIsPar = Standard_True;
-  mySqDist = new TColStd_HArray1OfReal(1, 1);
-  Standard_Real aDist = sqrt(anExtC.SquareDistance(1)) - S.Radius();
-  mySqDist->SetValue(1, aDist * aDist);
+    myIsPar = Standard_True;
+    mySqDist = new TColStd_HArray1OfReal(1, 1);
+    Standard_Real aDist = anExtC.SquareDistance(1);
+    for (Standard_Integer i = 2; i <= anExtC.NbExt(); i++)
+    {
+      const Standard_Real aD = anExtC.SquareDistance(i);
+      if (aD < aDist)
+      {
+        aDist = aD;
+      }
+    }
 
+    aDist = sqrt(aDist) - S.Radius();
+    mySqDist->SetValue(1, aDist * aDist);
+  }
 }
 //  Modified by skv - Thu Jul  7 14:37:05 2005 OCC9134 End
 
