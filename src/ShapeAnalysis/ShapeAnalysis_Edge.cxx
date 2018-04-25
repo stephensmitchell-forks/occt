@@ -438,7 +438,7 @@ Standard_Boolean ShapeAnalysis_Edge::CheckCurve3dWithPCurve (const TopoDS_Edge& 
   TopoDS_Vertex aFirstVert = FirstVertex (edge);
   TopoDS_Vertex aLastVert  = LastVertex (edge);
 
-  if (aFirstVert.IsNull() || aLastVert.IsNull())
+  if (aFirstVert.IsNull() || aLastVert.IsNull() || aFirstVert.IsSame(aLastVert))
     return Standard_False;
 
   Standard_Real preci1 = BRep_Tool::Tolerance (aFirstVert),
