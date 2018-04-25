@@ -184,7 +184,8 @@ void Extrema_ExtElCS::Perform(const gp_Lin& C,
     myPoint1 = new Extrema_HArray1OfPOnCurv(1, 1);
     myPoint2 = new Extrema_HArray1OfPOnSurf(1, 1);
     Standard_Real aDist = Extrem.SquareDistance(1);
-    for (Standard_Integer i = 2; i <= Extrem.NbExt(); i++)
+    const Standard_Integer aNbExt = Extrem.IsParallel() ? 1 : Extrem.NbExt();
+    for (Standard_Integer i = 2; i <= aNbExt; i++)
     {
       const Standard_Real aD = Extrem.SquareDistance(i);
       if (aD < aDist)
@@ -574,7 +575,9 @@ void Extrema_ExtElCS::Perform(const gp_Circ& C,
     myIsPar = Standard_True;
     mySqDist = new TColStd_HArray1OfReal(1, 1);
     Standard_Real aDist = anExtC.SquareDistance(1);
-    for (Standard_Integer i = 2; i <= anExtC.NbExt(); i++)
+
+    const Standard_Integer aNbExt = anExtC.IsParallel() ? 1 : anExtC.NbExt();
+    for (Standard_Integer i = 2; i <= aNbExt; i++)
     {
       const Standard_Real aD = anExtC.SquareDistance(i);
       if (aD < aDist)
