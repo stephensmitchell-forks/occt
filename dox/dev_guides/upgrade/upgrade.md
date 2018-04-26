@@ -1547,6 +1547,11 @@ Since new version, the method BRepAdaptor_CompCurve::IsPeriodic() will always re
 
 @subsection upgrade_730_removed Removed features
 * The methods *SetDeflection*, *SetEpsilonT*, *SetDiscretize* of the class *IntTools_EdgeFace* have been removed as excessive.
+* The following methods of the class *BRepAlgoAPI_BooleanOperation* has been removed as obsolete or replaced:
+  - *BuilderCanWork* can be replaced with *IsDone* or *HasErrors* method.
+  - *FuseEdges* removed as obsolete.
+  - *RefineEdges* replaced with new method *SimplifyResult*.
+* The method *ImagesResult* of the class *BOPAlgo_BuilderShape* has been removed as unused. The functionality of this method can be completely replaced by the history methods *Modified* and *IsDeleted*.
 
 @subsection upgrade_730_IntersectionAPI Changes in classes responsible for intersection algorithm
 

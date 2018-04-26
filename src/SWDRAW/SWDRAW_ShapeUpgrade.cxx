@@ -1361,7 +1361,8 @@ static Standard_Integer unifysamedom(Draw_Interpretor& di, Standard_Integer n, c
   Unifier().Build();
   TopoDS_Shape Result = Unifier().Shape();
 
-  BRepTest_Objects::SetHistory(Unifier().History());
+  if (BRepTest_Objects::IsHistoryNeeded())
+    BRepTest_Objects::SetHistory(Unifier().History());
 
   DBRep::Set(a[1], Result);
   return 0;
