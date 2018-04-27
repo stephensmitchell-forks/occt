@@ -29,6 +29,8 @@
 #include <TopTools_MapOfShape.hxx>
 #include <BRepCheck_Shell.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
+#include <BRepGProp_Triangulation.hxx>
+
 #ifdef OCCT_DEBUG
 static Standard_Integer AffichEps = 0;
 #endif
@@ -92,6 +94,7 @@ static Standard_Real surfaceProperties(const TopoDS_Shape& S, GProp_GProps& Prop
   BRepGProp_Domain BD;
   TopTools_MapOfShape aFMap;
   TopLoc_Location aLocDummy;
+  BRepGProp_Triangulation Gtr;
 
   for (ex.Init(S,TopAbs_FACE), i = 1; ex.More(); ex.Next(), i++) {
     const TopoDS_Face& F = TopoDS::Face(ex.Current());
@@ -104,7 +107,9 @@ static Standard_Real surfaceProperties(const TopoDS_Shape& S, GProp_GProps& Prop
       const Handle(Geom_Surface)& aSurf = BRep_Tool::Surface (F, aLocDummy);
       if (aSurf.IsNull())
       {
-        // skip faces without geometry
+        Gtr.SetFace(F);
+        if (Gtr.Perform(BRepGProp_Triangulation::Surface, gp_Pnt()))
+          Props.Add(Gtr);
         continue;
       }
     }
@@ -165,6 +170,7 @@ static Standard_Real volumeProperties(const TopoDS_Shape& S, GProp_GProps& Props
   TopExp_Explorer ex; 
   gp_Pnt P(roughBaryCenter(S)); 
   BRepGProp_Vinert G;  G.SetLocation(P);
+  BRepGProp_Triangulation Gtr;
 
   BRepGProp_Face   BF;
   BRepGProp_Domain BD;
@@ -192,7 +198,9 @@ static Standard_Real volumeProperties(const TopoDS_Shape& S, GProp_GProps& Props
       const Handle(Geom_Surface)& aSurf = BRep_Tool::Surface (F, aLocDummy);
       if (aSurf.IsNull())
       {
-        // skip faces without geometry
+        Gtr.SetFace(F);
+        if(Gtr.Perform(BRepGProp_Triangulation::Volume, P))
+          Props.Add(Gtr);
         continue;
       }
     }
@@ -317,6 +325,7 @@ static Standard_Real volumePropertiesGK(const TopoDS_Shape     &theShape,
   TopTools_MapOfShape aFwdFMap;
   TopTools_MapOfShape aRvsFMap;
   TopLoc_Location aLocDummy;
+  BRepGProp_Triangulation Gtr;
 
   aVProps.SetLocation(aLoc);
 
@@ -340,7 +349,9 @@ static Standard_Real volumePropertiesGK(const TopoDS_Shape     &theShape,
       const Handle(Geom_Surface)& aSurf = BRep_Tool::Surface (aFace, aLocDummy);
       if (aSurf.IsNull())
       {
-        // skip faces without geometry
+        Gtr.SetFace(aFace);
+        if (Gtr.Perform(BRepGProp_Triangulation::Volume, aLoc))
+          theProps.Add(Gtr);
         continue;
       }
     }
@@ -465,6 +476,7 @@ static Standard_Real volumePropertiesGK(const TopoDS_Shape     &theShape,
   TopTools_MapOfShape aFwdFMap;
   TopTools_MapOfShape aRvsFMap;
   TopLoc_Location aLocDummy;
+  BRepGProp_Triangulation Gtr;
 
   aVProps.SetLocation(aLoc);
 
@@ -488,7 +500,9 @@ static Standard_Real volumePropertiesGK(const TopoDS_Shape     &theShape,
       const Handle(Geom_Surface)& aSurf = BRep_Tool::Surface (aFace, aLocDummy);
       if (aSurf.IsNull())
       {
-        // skip faces without geometry
+        Gtr.SetFace(aFace);
+        if (Gtr.Perform(BRepGProp_Triangulation::Volume, aLoc))
+          theProps.Add(Gtr);
         continue;
       }
     }

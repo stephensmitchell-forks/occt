@@ -915,6 +915,25 @@ void BRepTools::Clean(const TopoDS_Shape& theShape)
 }
 
 //=======================================================================
+//function : CleanGeometry
+//purpose  : 
+//=======================================================================
+
+void BRepTools::CleanGeometry(const TopoDS_Shape& theShape)
+{
+  if (theShape.IsNull())
+    return;
+
+  TopExp_Explorer aFaceIt(theShape, TopAbs_FACE);
+  for (; aFaceIt.More(); aFaceIt.Next())
+  {
+    const TopoDS_Face& aFace = TopoDS::Face(aFaceIt.Current());
+    BRep_TFace* aTFace = static_cast<BRep_TFace*>(aFace.TShape().get());
+    aTFace->Surface(Handle(Geom_Surface)());
+  }
+}
+
+//=======================================================================
 //function : RemoveUnusedPCurves
 //purpose  : 
 //=======================================================================

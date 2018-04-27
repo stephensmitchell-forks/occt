@@ -17,6 +17,8 @@ BRepGProp_Sinert.hxx
 BRepGProp_TFunction.cxx
 BRepGProp_TFunction.hxx
 BRepGProp_TFunction.lxx
+BRepGProp_Triangulation.hxx
+BRepGProp_Triangulation.cxx
 BRepGProp_UFunction.cxx
 BRepGProp_UFunction.hxx
 BRepGProp_UFunction.lxx

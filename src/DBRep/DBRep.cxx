@@ -370,11 +370,22 @@ static Standard_Integer triangles(Draw_Interpretor& ,
 static Standard_Integer tclean(Draw_Interpretor& , 
 			       Standard_Integer n, const char** a)
 {
-  if (n < 1) return 1;
+  if (n <= 1) return 1;
+
+  Standard_Integer aStart = 1;
+  Standard_Boolean isRemoveGeometry = Standard_False;
+  if (TCollection_AsciiString(a[1]) == "-geom")
+  {
+    aStart++;
+    isRemoveGeometry = Standard_True;
+  }
   
-  for (Standard_Integer i = 1; i < n; i++) {
+  for (Standard_Integer i = aStart; i < n; i++) {
     TopoDS_Shape S = DBRep::Get(a[i]);
-    BRepTools::Clean(S);
+    if (isRemoveGeometry)
+      BRepTools::CleanGeometry(S);
+    else
+      BRepTools::Clean(S);
   }
   return 0;
 }
@@ -1412,7 +1423,7 @@ void  DBRep::BasicCommands(Draw_Interpretor& theCommands)
   theCommands.Add("hlr" ,"[no]hlr, rg1, rgn, hid, ang",__FILE__,hlr ,g);
   theCommands.Add("vori","vori [name1 ...], edges are colored by orientation (see vconn)",__FILE__,dispor,g);
   theCommands.Add("triangles", "triangles [name1]..., display triangles of shapes if exists",__FILE__, triangles, g);
-  theCommands.Add("tclean", "tclean [name1]..., erase triangulations and polygons on triangulations from shapes",__FILE__, tclean, g); 
+  theCommands.Add("tclean", "tclean [-geom] [name1]..., erase geometry (with -geom) or triangulations and polygons on triangulations from shapes",__FILE__, tclean, g); 
   theCommands.Add("polygons", "polygons [name1]..., display polygons of shapes if exists",__FILE__, polygons, g);
   theCommands.Add("vconn","vconn [name1 ...] , edges are colored by number of faces (see vori)",__FILE__,dispor,g);
   theCommands.Add("discretisation","discretisation [nbpoints]",__FILE__,discretisation,g);

@@ -1,0 +1,11 @@
+
+psphere sp1 10
+checkprops sp1 -v 4188.79
+checkprops sp1 -s 1256.64
+
+incmesh sp1 0.01
+tclean -geom sp1    # Special command to nullify the geometry on the face
+
+checkprops sp1 -v 4183.13
+checkprops sp1 -s 1255.75
+

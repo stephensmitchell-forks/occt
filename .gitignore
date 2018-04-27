@@ -28,7 +28,10 @@ Release
 /adm/lin
 /adm/mac
 /adm/make
+*.vcproj
 *.vcproj*user
+*.vcxproj
+*.vcxproj.filters
 *.vcxproj*user
 *.csproj*user
 *.ncb
@@ -39,6 +42,7 @@ Release
 *.VC.opendb
 *.ipch
 *.aps
+*.sln
 
 # test results
 /results*
@@ -63,3 +67,8 @@ Release
 /stamp*
 /build*
 /install
+
+CMakeFiles
+cmake_install.cmake
+
+/resources/*.rc
