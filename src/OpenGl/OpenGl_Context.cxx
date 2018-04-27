@@ -1473,7 +1473,7 @@ void OpenGl_Context::init (const Standard_Boolean theIsCoreProfile)
     glGetIntegerv (GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &myAnisoMax);
   }
 
-  myClippingState.Init (myMaxClipPlanes);
+  myClippingState.Init();
 
 #if !defined(GL_ES_VERSION_2_0)
 

@@ -583,9 +583,8 @@ void OpenGl_Structure::Render (const Handle(OpenGl_Workspace) &theWorkspace) con
           }
 
           // check for clipping
-          const Graphic3d_Vec4d& aPlaneEquation = aPlane->GetEquation();
           const Graphic3d_Vec4d aCheckPnt (anAnchor.X(), anAnchor.Y(), anAnchor.Z(), 1.0);
-          if (aPlaneEquation.Dot (aCheckPnt) < 0.0) // vertex is outside the half-space
+          if (aPlane->ProbePoint (aCheckPnt) == Graphic3d_ClipState_Out)
           {
             isClipped = true;
             break;
@@ -610,24 +609,13 @@ void OpenGl_Structure::Render (const Handle(OpenGl_Workspace) &theWorkspace) con
           continue;
         }
 
-        // check for clipping
-        const Graphic3d_Vec4d& aPlaneEquation = aPlane->GetEquation();
-        const Graphic3d_Vec4d aMaxPnt (aPlaneEquation.x() > 0.0 ? aBBox.CornerMax().x() : aBBox.CornerMin().x(),
-                                       aPlaneEquation.y() > 0.0 ? aBBox.CornerMax().y() : aBBox.CornerMin().y(),
-                                       aPlaneEquation.z() > 0.0 ? aBBox.CornerMax().z() : aBBox.CornerMin().z(),
-                                       1.0);
-        if (aPlaneEquation.Dot (aMaxPnt) < 0.0) // max vertex is outside the half-space
+        const Graphic3d_ClipState aBoxState = aPlane->ProbeBox (aBBox);
+        if (aBoxState == Graphic3d_ClipState_Out)
         {
           isClipped = true;
           break;
         }
-
-        // check for no intersection (e.g. object is "entirely not clipped")
-        const Graphic3d_Vec4d aMinPnt (aPlaneEquation.x() > 0.0 ? aBBox.CornerMin().x() : aBBox.CornerMax().x(),
-                                       aPlaneEquation.y() > 0.0 ? aBBox.CornerMin().y() : aBBox.CornerMax().y(),
-                                       aPlaneEquation.z() > 0.0 ? aBBox.CornerMin().z() : aBBox.CornerMax().z(),
-                                       1.0);
-        if (aPlaneEquation.Dot (aMinPnt) > 0.0) // min vertex is inside the half-space
+        else if (aBoxState == Graphic3d_ClipState_In)
         {
           aCtx->ChangeClipping().SetEnabled (aCtx, aPlaneIt, Standard_False);
           hasDisabled = true;

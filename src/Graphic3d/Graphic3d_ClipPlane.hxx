@@ -19,12 +19,21 @@
 #include <Aspect_HatchStyle.hxx>
 #include <gp_Pln.hxx>
 #include <Graphic3d_AspectFillArea3d.hxx>
+#include <Graphic3d_BndBox3d.hxx>
 #include <Graphic3d_CappingFlags.hxx>
 #include <Graphic3d_TextureMap.hxx>
 #include <NCollection_Vec4.hxx>
 #include <Standard_Macro.hxx>
 #include <Standard_TypeDef.hxx>
 #include <Standard_Transient.hxx>
+
+//! Clipping state.
+enum Graphic3d_ClipState
+{
+  Graphic3d_ClipState_Out, //!< fully outside (clipped) - should be discarded
+  Graphic3d_ClipState_In,  //!< fully inside  (NOT clipped) - should NOT be discarded
+  Graphic3d_ClipState_On,  //!< on (not clipped / partially clipped) - should NOT be discarded
+};
 
 //! Container for properties describing graphic driver clipping planes.
 //! It is up to application to create instances of this class and specify its
@@ -41,6 +50,7 @@
 //! the view defined ones.
 class Graphic3d_ClipPlane : public Standard_Transient
 {
+  DEFINE_STANDARD_RTTIEXT(Graphic3d_ClipPlane,Standard_Transient)
 public:
 
   typedef NCollection_Vec4<Standard_Real> Equation;
@@ -116,6 +126,24 @@ public:
   //! Get geometrical definition.
   //! @return geometrical definition of clipping plane
   const gp_Pln& ToPlane() const { return myPlane; }
+
+  //! Return the previous plane in a Chain of Planes defining Union,
+  //! or NULL if there is no chain or it is a first element in chain.
+  //! When clipping is defined by a Chain of Planes,
+  //! it cuts a space only in case if check fails for all Planes in Chain.
+  Handle(Graphic3d_ClipPlane) PrevPlaneInChain() const { return myPrevInChain; }
+
+  //! Return the next plane in a Chain of Planes defining Union,
+  //! or NULL if there is no chain or it is a last element in chain.
+  //! When clipping is defined by a Chain of Planes,
+  //! it cuts a space only in case if check fails for all Planes in Chain.
+  const Handle(Graphic3d_ClipPlane)& NextPlaneInChain() const { return myNextInChain; }
+
+  //! Return length of the union Chain in forward direction (including this item, so it is always >= 1).
+  Standard_Integer NbForwardUnionChains() const { return myChainLenFwd; }
+
+  //! Set the next plane in a Chain of Planes.
+  Standard_EXPORT void SetNextPlaneInChain (const Handle(Graphic3d_ClipPlane)& thePlane);
 
   //! Clone plane. Virtual method to simplify copying procedure if plane
   //! class is redefined at application level to add specific fields to it
@@ -209,6 +237,113 @@ public:
   //! Return true if some fill area aspect properties should be taken from object.
   bool ToUseObjectProperties() const { return myFlags != Graphic3d_CappingFlags_None; }
 
+public:
+
+  //! Check if the given point is outside / inside / on section.
+  Graphic3d_ClipState ProbePoint (const Graphic3d_Vec4d& thePoint) const
+  {
+    for (const Graphic3d_ClipPlane* aPlaneIter = this; aPlaneIter != NULL; aPlaneIter = aPlaneIter->myNextInChain.get())
+    {
+      Graphic3d_ClipState aPlnState = aPlaneIter->ProbePointHalfspace (thePoint);
+      if (aPlnState == Graphic3d_ClipState_On)
+      {
+        return Graphic3d_ClipState_On;
+      }
+      else if (aPlnState == Graphic3d_ClipState_Out
+            && aPlaneIter->myNextInChain.IsNull())
+      {
+        return Graphic3d_ClipState_Out;
+      }
+    }
+    return Graphic3d_ClipState_In;
+  }
+
+  //! Check if the given bounding box is fully outside / fully inside.
+  Graphic3d_ClipState ProbeBox (const Graphic3d_BndBox3d& theBox) const
+  {
+    Graphic3d_ClipState aPrevState = Graphic3d_ClipState_On;
+    for (const Graphic3d_ClipPlane* aPlaneIter = this; aPlaneIter != NULL; aPlaneIter = aPlaneIter->myNextInChain.get())
+    {
+      if (aPlaneIter->IsBoxFullOutHalfspace (theBox))
+      {
+        if (aPlaneIter->myNextInChain.IsNull())
+        {
+          return Graphic3d_ClipState_Out;
+        }
+        else if (aPrevState == Graphic3d_ClipState_In)
+        {
+          return Graphic3d_ClipState_On;
+        }
+        aPrevState = Graphic3d_ClipState_Out;
+      }
+      else if (aPlaneIter->IsBoxFullInHalfspace (theBox))
+      {
+        if (aPlaneIter->myNextInChain.IsNull())
+        {
+          return Graphic3d_ClipState_In;
+        }
+        else if (aPrevState == Graphic3d_ClipState_Out)
+        {
+          return Graphic3d_ClipState_On;
+        }
+        aPrevState = Graphic3d_ClipState_In;
+      }
+      else
+      {
+        return Graphic3d_ClipState_On;
+      }
+    }
+    return Graphic3d_ClipState_On;
+  }
+
+public:
+
+  //! Check if the given point is outside of the half-space (e.g. should be discarded by clipping plane).
+  Graphic3d_ClipState ProbePointHalfspace (const Graphic3d_Vec4d& thePoint) const
+  {
+    const Standard_Real aVal = myEquation.Dot (thePoint);
+    return aVal < 0.0
+         ? Graphic3d_ClipState_Out
+         : (aVal == 0.0
+          ? Graphic3d_ClipState_On
+          : Graphic3d_ClipState_In);
+  }
+
+  //! Check if the given bounding box is fully outside / fully inside the half-space.
+  Graphic3d_ClipState ProbeBoxHalfspace (const Graphic3d_BndBox3d& theBox) const
+  {
+    if (IsBoxFullOutHalfspace (theBox))
+    {
+      return Graphic3d_ClipState_Out;
+    }
+    return IsBoxFullInHalfspace (theBox)
+         ? Graphic3d_ClipState_In
+         : Graphic3d_ClipState_On;
+  }
+
+  //! Check if the given point is outside of the half-space (e.g. should be discarded by clipping plane).
+  bool IsPointOutHalfspace (const Graphic3d_Vec4d& thePoint) const { return ProbePointHalfspace (thePoint) == Graphic3d_ClipState_Out; }
+
+  //! Check if the given bounding box is fully outside of the half-space (e.g. should be discarded by clipping plane).
+  bool IsBoxFullOutHalfspace (const Graphic3d_BndBox3d& theBox) const
+  {
+    const Graphic3d_Vec4d aMaxPnt (myEquation.x() > 0.0 ? theBox.CornerMax().x() : theBox.CornerMin().x(),
+                                   myEquation.y() > 0.0 ? theBox.CornerMax().y() : theBox.CornerMin().y(),
+                                   myEquation.z() > 0.0 ? theBox.CornerMax().z() : theBox.CornerMin().z(),
+                                   1.0);
+    return IsPointOutHalfspace (aMaxPnt);
+  }
+
+  //! Check if the given bounding box is fully inside (or touches from inside) the half-space (e.g. NOT discarded by clipping plane).
+  bool IsBoxFullInHalfspace (const Graphic3d_BndBox3d& theBox) const
+  {
+    const Graphic3d_Vec4d aMinPnt (myEquation.x() > 0.0 ? theBox.CornerMin().x() : theBox.CornerMax().x(),
+                                   myEquation.y() > 0.0 ? theBox.CornerMin().y() : theBox.CornerMax().y(),
+                                   myEquation.z() > 0.0 ? theBox.CornerMin().z() : theBox.CornerMax().z(),
+                                   1.0);
+    return !IsPointOutHalfspace (aMinPnt);
+  }
+
 public: // @name modification counters
 
   //! @return modification counter for equation.
@@ -231,21 +366,24 @@ private:
   //! Set capping flag.
   Standard_EXPORT void setCappingFlag (bool theToUse, int theFlag);
 
+  //! Update chain length in backward direction.
+  void updateChainLen();
+
 private:
 
   Handle(Graphic3d_AspectFillArea3d) myAspect;    //!< fill area aspect
+  Handle(Graphic3d_ClipPlane)   myNextInChain;    //!< next     plane in a chain of planes defining Union
+  Graphic3d_ClipPlane*          myPrevInChain;    //!< previous plane in a chain of planes defining Union
   TCollection_AsciiString myId;                   //!< resource id
   gp_Pln                  myPlane;                //!< plane definition
   Equation                myEquation;             //!< plane equation vector
+  Standard_Integer        myChainLenFwd;          //!< chain length in forward direction (including this item)
   unsigned int            myFlags;                //!< capping flags
   unsigned int            myEquationMod;          //!< modification counter for equation
   unsigned int            myAspectMod;            //!< modification counter of aspect
   Standard_Boolean        myIsOn;                 //!< state of the clipping plane
   Standard_Boolean        myIsCapping;            //!< state of graphic driver capping
 
-public:
-
-  DEFINE_STANDARD_RTTIEXT(Graphic3d_ClipPlane,Standard_Transient)
 };
 
 DEFINE_STANDARD_HANDLE (Graphic3d_ClipPlane, Standard_Transient)

@@ -30,14 +30,14 @@ class OpenGl_ClippingIterator;
 //! class.
 class OpenGl_Clipping
 {
+  friend class OpenGl_ClippingIterator;
 public: //! @name general methods
 
   //! Default constructor.
   Standard_EXPORT OpenGl_Clipping();
 
   //! Initialize.
-  //! @param theMaxPlanes [in] number of clipping planes supported by OpenGl context.
-  Standard_EXPORT void Init (const Standard_Integer theMaxPlanes);
+  Standard_EXPORT void Init();
 
   //! Setup list of global (for entire view) clipping planes
   //! and clears local plane list if it was not released before.
@@ -59,6 +59,9 @@ public: //! @name general methods
 
   //! @return number of enabled clipping + capping planes
   Standard_Integer NbClippingOrCappingOn() const { return myNbClipping + myNbCapping; }
+
+  //! Return TRUE if there are clipping chains in the list (defining more than 1 sub-plane)
+  Standard_Boolean HasClippingChains() const { return myNbChains != (myNbClipping + myNbCapping); }
 
 public: //! @name advanced method for disabling defined planes
 
@@ -120,15 +123,13 @@ private:
   NCollection_Vector<Standard_Boolean>     mySkipFilter;     //!< ids of planes that were disabled before calling ::DisableAllExcept()
   Standard_Integer                         myNbClipping;     //!< number of enabled clipping-only planes (NOT capping)
   Standard_Integer                         myNbCapping;      //!< number of enabled capping  planes
+  Standard_Integer                         myNbChains;       //!< number of enabled chains
   Standard_Integer                         myNbDisabled;     //!< number of defined but disabled planes
 
 private:
-
   //! Copying allowed only within Handles
   OpenGl_Clipping            (const OpenGl_Clipping& );
   OpenGl_Clipping& operator= (const OpenGl_Clipping& );
-
-  friend class OpenGl_ClippingIterator;
 };
 
 //! The iterator through clipping planes.

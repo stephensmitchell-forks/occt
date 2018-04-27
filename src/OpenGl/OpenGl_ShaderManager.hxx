@@ -414,6 +414,11 @@ protected:
     if (aNbPlanes > 0)
     {
       aBits |= OpenGl_PO_ClipPlanesN;
+      if (myContext->Clipping().HasClippingChains())
+      {
+        aBits |= OpenGl_PO_ClipChains;
+      }
+
       if (aNbPlanes == 1)
       {
         aBits |= OpenGl_PO_ClipPlanes1;
@@ -602,6 +607,7 @@ protected:
   mutable NCollection_Array1<OpenGl_ShaderLightParameters> myLightParamsArray;
   mutable NCollection_Array1<OpenGl_Vec4>                  myClipPlaneArray;
   mutable NCollection_Array1<OpenGl_Vec4d>                 myClipPlaneArrayFfp;
+  mutable NCollection_Array1<Standard_Integer>             myClipChainArray;
 
 private:
 

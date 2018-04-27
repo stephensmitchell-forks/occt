@@ -38,12 +38,13 @@ OpenGl_ClippingIterator::OpenGl_ClippingIterator (const OpenGl_Clipping& theClip
 }
 
 // =======================================================================
-// function : OpenGl_ClippingState
+// function : OpenGl_Clipping
 // purpose  :
 // =======================================================================
-OpenGl_Clipping::OpenGl_Clipping ()
+OpenGl_Clipping::OpenGl_Clipping()
 : myNbClipping (0),
   myNbCapping  (0),
+  myNbChains   (0),
   myNbDisabled (0)
 {}
 
@@ -51,13 +52,14 @@ OpenGl_Clipping::OpenGl_Clipping ()
 // function : Init
 // purpose  :
 // =======================================================================
-void OpenGl_Clipping::Init (const Standard_Integer )
+void OpenGl_Clipping::Init()
 {
   myPlanesGlobal.Nullify();
   myPlanesLocal.Nullify();
 
   myNbClipping = 0;
   myNbCapping  = 0;
+  myNbChains   = 0;
   myNbDisabled = 0;
 }
 
@@ -122,13 +124,15 @@ void OpenGl_Clipping::add (const Handle(OpenGl_Context)& ,
       continue;
     }
 
+    const Standard_Integer aNbSubPlanes = aPlane->NbForwardUnionChains();
+    myNbChains += 1;
     if (aPlane->IsCapping())
     {
-      ++myNbCapping;
+      myNbCapping += aNbSubPlanes;
     }
     else
     {
-      ++myNbClipping;
+      myNbClipping += aNbSubPlanes;
     }
   }
 }
@@ -156,13 +160,15 @@ void OpenGl_Clipping::remove (const Handle(OpenGl_Context)& ,
       continue;
     }
 
+    const Standard_Integer aNbSubPlanes = aPlane->NbForwardUnionChains();
+    myNbChains -= 1;
     if (aPlane->IsCapping())
     {
-      --myNbCapping;
+      myNbCapping -= aNbSubPlanes;
     }
     else
     {
-      --myNbClipping;
+      myNbClipping -= aNbSubPlanes;
     }
   }
 }
@@ -183,15 +189,17 @@ Standard_Boolean OpenGl_Clipping::SetEnabled (const Handle(OpenGl_Context)&  ,
   }
 
   isDisabled = !theIsEnabled;
+  const Standard_Integer aNbSubPlanes = thePlane.Value()->NbForwardUnionChains();
   if (thePlane.Value()->IsCapping())
   {
-    myNbCapping += (theIsEnabled ? 1 : -1);
+    myNbCapping += (theIsEnabled ? aNbSubPlanes : -aNbSubPlanes);
   }
   else
   {
-    myNbClipping += (theIsEnabled ? 1 : -1);
+    myNbClipping += (theIsEnabled ? aNbSubPlanes : -aNbSubPlanes);
   }
-  myNbDisabled -= (theIsEnabled ? 1 : -1);
+  myNbChains   += (theIsEnabled ? 1 : -1);
+  myNbDisabled += (theIsEnabled ? -aNbSubPlanes : aNbSubPlanes);
   return Standard_True;
 }
 
@@ -217,13 +225,15 @@ void OpenGl_Clipping::RestoreDisabled (const Handle(OpenGl_Context)& )
 
     isDisabled = Standard_False;
     const Handle(Graphic3d_ClipPlane)& aPlane = aPlaneIter.Value();
+    const Standard_Integer aNbSubPlanes = aPlane->NbForwardUnionChains();
+    myNbChains += 1;
     if (aPlane->IsCapping())
     {
-      ++myNbCapping;
+      myNbCapping += aNbSubPlanes;
     }
     else
     {
-      ++myNbClipping;
+      myNbClipping += aNbSubPlanes;
     }
   }
 }

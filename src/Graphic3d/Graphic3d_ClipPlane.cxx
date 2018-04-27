@@ -45,8 +45,10 @@ namespace
 // =======================================================================
 Graphic3d_ClipPlane::Graphic3d_ClipPlane()
 : myAspect     (defaultAspect()),
+  myPrevInChain(NULL),
   myPlane      (0.0, 0.0, 1.0, 0.0),
   myEquation   (0.0, 0.0, 1.0, 0.0),
+  myChainLenFwd(1),
   myFlags      (Graphic3d_CappingFlags_None),
   myEquationMod(0),
   myAspectMod  (0),
@@ -62,8 +64,10 @@ Graphic3d_ClipPlane::Graphic3d_ClipPlane()
 // =======================================================================
 Graphic3d_ClipPlane::Graphic3d_ClipPlane(const Equation& theEquation)
 : myAspect     (defaultAspect()),
+  myPrevInChain(NULL),
   myPlane      (theEquation.x(), theEquation.y(), theEquation.z(), theEquation.w()),
   myEquation   (theEquation),
+  myChainLenFwd(1),
   myFlags      (Graphic3d_CappingFlags_None),
   myEquationMod(0),
   myAspectMod  (0),
@@ -80,8 +84,10 @@ Graphic3d_ClipPlane::Graphic3d_ClipPlane(const Equation& theEquation)
 Graphic3d_ClipPlane::Graphic3d_ClipPlane(const Graphic3d_ClipPlane& theOther)
 : Standard_Transient(theOther),
   myAspect     (defaultAspect()),
+  myPrevInChain(NULL),
   myPlane      (theOther.myPlane),
   myEquation   (theOther.myEquation),
+  myChainLenFwd(1),
   myFlags      (theOther.myFlags),
   myEquationMod(0),
   myAspectMod  (0),
@@ -98,7 +104,9 @@ Graphic3d_ClipPlane::Graphic3d_ClipPlane(const Graphic3d_ClipPlane& theOther)
 // =======================================================================
 Graphic3d_ClipPlane::Graphic3d_ClipPlane(const gp_Pln& thePlane)
 : myAspect     (defaultAspect()),
+  myPrevInChain(NULL),
   myPlane      (thePlane),
+  myChainLenFwd(1),
   myFlags      (Graphic3d_CappingFlags_None),
   myEquationMod(0),
   myAspectMod  (0),
@@ -140,6 +148,10 @@ void Graphic3d_ClipPlane::SetEquation (const gp_Pln& thePlane)
 // =======================================================================
 void Graphic3d_ClipPlane::SetOn (const Standard_Boolean theIsOn)
 {
+  if (myPrevInChain != NULL)
+  {
+    throw Standard_ProgramError ("Graphic3d_ClipPlane::SetOn() - undefined operation for a plane in Union");
+  }
   myIsOn = theIsOn;
 }
 
@@ -275,4 +287,36 @@ void Graphic3d_ClipPlane::makeId()
 {
   myId = TCollection_AsciiString ("Graphic3d_ClipPlane_") //DynamicType()->Name()
        + TCollection_AsciiString (Standard_Atomic_Increment (&THE_CLIP_PLANE_COUNTER));
+}
+
+// =======================================================================
+// function : updateChainLen
+// purpose  :
+// =======================================================================
+void Graphic3d_ClipPlane::updateChainLen()
+{
+  myChainLenFwd = !myNextInChain.IsNull() ? (myNextInChain->myChainLenFwd + 1) : 1;
+  if (myPrevInChain != NULL)
+  {
+    myPrevInChain->updateChainLen();
+  }
+}
+
+// =======================================================================
+// function : SetNextPlaneInChain
+// purpose  :
+// =======================================================================
+void Graphic3d_ClipPlane::SetNextPlaneInChain (const Handle(Graphic3d_ClipPlane)& thePlane)
+{
+  ++myEquationMod;
+  if (!myNextInChain.IsNull())
+  {
+    myNextInChain->myPrevInChain = NULL;
+  }
+  myNextInChain = thePlane;
+  if (!myNextInChain.IsNull())
+  {
+    myNextInChain->myPrevInChain = this;
+  }
+  updateChainLen();
 }

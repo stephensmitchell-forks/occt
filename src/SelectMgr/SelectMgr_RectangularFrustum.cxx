@@ -276,7 +276,7 @@ void SelectMgr_RectangularFrustum::Build (const gp_Pnt2d &thePoint)
   // {i, j, k} vectors and store them to corresponding class fields
   cacheVertexProjections (this);
 
-  myViewClipRange.Clear();
+  myViewClipRange.SetVoid();
 
   myScale = 1.0;
 }
@@ -306,7 +306,7 @@ void SelectMgr_RectangularFrustum::Build (const gp_Pnt2d& theMinPnt,
   // {i, j, k} vectors and store them to corresponding class fields
   cacheVertexProjections (this);
 
-  myViewClipRange.Clear();
+  myViewClipRange.SetVoid();
 
   myScale = 1.0;
 }
@@ -645,56 +645,73 @@ gp_Pnt SelectMgr_RectangularFrustum::DetectedPoint (const Standard_Real theDepth
 // purpose  :
 // =======================================================================
 void SelectMgr_RectangularFrustum::computeClippingRange (const Graphic3d_SequenceOfHClipPlane& thePlanes,
-                                                         Standard_Real& theDepthMin,
-                                                         Standard_Real& theDepthMax)
+                                                         SelectMgr_ViewClipRange& theRange)
 {
-  theDepthMax = DBL_MAX;
-  theDepthMin = -DBL_MAX;
   Standard_Real aPlaneA, aPlaneB, aPlaneC, aPlaneD;
   for (Graphic3d_SequenceOfHClipPlane::Iterator aPlaneIt (thePlanes); aPlaneIt.More(); aPlaneIt.Next())
   {
     const Handle(Graphic3d_ClipPlane)& aClipPlane = aPlaneIt.Value();
     if (!aClipPlane->IsOn())
-      continue;
-
-    gp_Pln aGeomPlane = aClipPlane->ToPlane();
-
-    aGeomPlane.Coefficients (aPlaneA, aPlaneB, aPlaneC, aPlaneD);
-
-    const gp_XYZ& aPlaneDirXYZ = aGeomPlane.Axis().Direction().XYZ();
-
-    Standard_Real aDotProduct = myViewRayDir.XYZ ().Dot (aPlaneDirXYZ);
-    Standard_Real aDistance = - myNearPickedPnt.XYZ ().Dot (aPlaneDirXYZ)
-                              - aPlaneD;
-
-    // check whether the pick line is parallel to clip plane
-    if (Abs (aDotProduct) < Precision::Angular())
-    {
-      // line lies below the plane and is not clipped, skip
-      continue;
-    }
-
-    // compute distance to point of pick line intersection with the plane
-    Standard_Real aParam = aDistance / aDotProduct;
-
-    // check if ray intersects the plane, in case aIntDist < 0
-    // the plane is "behind" the ray
-    if (aParam < 0.0)
     {
       continue;
     }
 
-    const gp_Pnt anIntersectionPt = myNearPickedPnt.XYZ() + myViewRayDir.XYZ() * aParam;
-    const Standard_Real aDistToPln = anIntersectionPt.Distance (myNearPickedPnt);
+    Bnd_Range aSubRange (RealFirst(), RealLast());
+    for (const Graphic3d_ClipPlane* aSubPlaneIter = aClipPlane.get(); aSubPlaneIter != NULL; aSubPlaneIter = aSubPlaneIter->NextPlaneInChain().get())
+    {
+      const gp_Pln aGeomPlane = aSubPlaneIter->ToPlane();
+      aGeomPlane.Coefficients (aPlaneA, aPlaneB, aPlaneC, aPlaneD);
 
-    // change depth limits for case of opposite and directed planes
-    if (aDotProduct < 0.0)
-    {
-      theDepthMax = Min (aDistToPln, theDepthMax);
+      const gp_XYZ& aPlaneDirXYZ = aGeomPlane.Axis().Direction().XYZ();
+      Standard_Real aDotProduct = myViewRayDir.XYZ().Dot (aPlaneDirXYZ);
+      Standard_Real aDistance   = -myNearPickedPnt.XYZ().Dot (aPlaneDirXYZ) - aPlaneD;
+
+      // check whether the pick line is parallel to clip plane
+      if (Abs (aDotProduct) < Precision::Angular())
+      {
+        // line lies below the plane and is not clipped, skip
+        continue;
+      }
+
+      // compute distance to point of pick line intersection with the plane
+      const Standard_Real aParam = aDistance / aDotProduct;
+      if (aParam < 0.0)
+      {
+        // check if ray intersects the plane, in case aIntDist < 0 the plane is "behind" the ray
+        continue;
+      }
+
+      // change depth limits for case of opposite and directed planes
+      const gp_Pnt anIntersectionPnt = myNearPickedPnt.XYZ() + myViewRayDir.XYZ() * aParam;
+      const Standard_Real aDistToPln = anIntersectionPnt.Distance (myNearPickedPnt);
+      if (aClipPlane->NextPlaneInChain().IsNull())
+      {
+        if (aDotProduct < 0.0)
+        {
+          theRange.ChangeMain().Add (Bnd_Range (aDistToPln, RealLast()));
+        }
+        else
+        {
+          theRange.ChangeMain().Add (Bnd_Range (RealFirst(), aDistToPln));
+        }
+      }
+      else
+      {
+        if (aDotProduct < 0.0)
+        {
+          aSubRange.TrimFrom (aDistToPln);
+        }
+        else
+        {
+          aSubRange.TrimTo (aDistToPln);
+        }
+      }
     }
-    else if (aDistToPln > theDepthMin)
+
+    if (!aSubRange.IsVoid()
+     && !aClipPlane->NextPlaneInChain().IsNull())
     {
-      theDepthMin = Max (aDistToPln, theDepthMin);
+      theRange.AddSubRange (aSubRange);
     }
   }
 }
@@ -707,10 +724,9 @@ void SelectMgr_RectangularFrustum::computeClippingRange (const Graphic3d_Sequenc
 Standard_Boolean SelectMgr_RectangularFrustum::IsClipped (const Graphic3d_SequenceOfHClipPlane& thePlanes,
                                                           const Standard_Real theDepth)
 {
-  Standard_Real aMaxDepth, aMinDepth;
-  computeClippingRange (thePlanes, aMinDepth, aMaxDepth);
-
-  return (theDepth <= aMinDepth || theDepth >= aMaxDepth);
+  SelectMgr_ViewClipRange aRange;
+  computeClippingRange (thePlanes, aRange);
+  return aRange.IsClipped (theDepth);
 }
 
 // =======================================================================
@@ -722,13 +738,11 @@ void SelectMgr_RectangularFrustum::SetViewClipping (const Handle(Graphic3d_Seque
   if (thePlanes.IsNull()
    || thePlanes->IsEmpty())
   {
-    myViewClipRange.Clear();
+    myViewClipRange.SetVoid();
     return;
   }
 
-  Standard_Real aMaxDepth, aMinDepth;
-  computeClippingRange (*thePlanes, aMinDepth, aMaxDepth);
-  myViewClipRange.Set (aMinDepth, aMaxDepth);
+  computeClippingRange (*thePlanes, myViewClipRange);
 }
 
 // =======================================================================
@@ -737,14 +751,8 @@ void SelectMgr_RectangularFrustum::SetViewClipping (const Handle(Graphic3d_Seque
 // =======================================================================
 Standard_Boolean SelectMgr_RectangularFrustum::isViewClippingOk (const Standard_Real theDepth) const
 {
-  if (!myViewClipRange.IsValid()
-   || !myIsViewClipEnabled)
-  {
-    return Standard_True;
-  }
-
-  return myViewClipRange.MaxDepth() > theDepth
-    && myViewClipRange.MinDepth() < theDepth;
+  return !myIsViewClipEnabled
+      || !myViewClipRange.IsClipped (theDepth);
 }
 
 // =======================================================================

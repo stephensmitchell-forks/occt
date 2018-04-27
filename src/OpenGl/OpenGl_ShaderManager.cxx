@@ -238,6 +238,25 @@ const char THE_FRAG_CLIP_PLANES_N[] =
   EOL"    }"
   EOL"  }";
 
+//! Process chains of clipping planes in Fragment Shader.
+const char THE_FRAG_CLIP_CHAINS_N[] =
+EOL"  for (int aPlaneIter = 0; aPlaneIter < occClipPlaneCount;)"
+EOL"  {"
+EOL"    vec4 aClipEquation = occClipPlaneEquations[aPlaneIter];"
+EOL"    if (dot (aClipEquation.xyz, PositionWorld.xyz / PositionWorld.w) + aClipEquation.w < 0.0)"
+EOL"    {"
+EOL"      if (occClipPlaneChains[aPlaneIter] == 1)"
+EOL"      {"
+EOL"        discard;"
+EOL"      }"
+EOL"      aPlaneIter += 1;"
+EOL"    }"
+EOL"    else"
+EOL"    {"
+EOL"      aPlaneIter += occClipPlaneChains[aPlaneIter];"
+EOL"    }"
+EOL"  }";
+
 //! Process 1 clipping plane in Fragment Shader.
 const char THE_FRAG_CLIP_PLANES_1[] =
   EOL"  vec4 aClipEquation0 = occClipPlaneEquations[0];"
@@ -255,6 +274,16 @@ const char THE_FRAG_CLIP_PLANES_2[] =
   EOL"  {"
   EOL"    discard;"
   EOL"  }";
+
+//! Process a chain of 2 clipping planes in Fragment Shader (3/4 section).
+const char THE_FRAG_CLIP_CHAINS_2[] =
+EOL"  vec4 aClipEquation0 = occClipPlaneEquations[0];"
+EOL"  vec4 aClipEquation1 = occClipPlaneEquations[1];"
+EOL"  if (dot (aClipEquation0.xyz, PositionWorld.xyz / PositionWorld.w) + aClipEquation0.w < 0.0"
+EOL"   && dot (aClipEquation1.xyz, PositionWorld.xyz / PositionWorld.w) + aClipEquation1.w < 0.0)"
+EOL"  {"
+EOL"    discard;"
+EOL"  }";
 
 #if !defined(GL_ES_VERSION_2_0)
 
@@ -933,7 +962,8 @@ void OpenGl_ShaderManager::PushClippingState (const Handle(OpenGl_ShaderProgram)
     for (OpenGl_ClippingIterator aPlaneIter (myContext->Clipping()); aPlaneIter.More(); aPlaneIter.Next())
     {
       const Handle(Graphic3d_ClipPlane)& aPlane = aPlaneIter.Value();
-      if (aPlaneIter.IsDisabled())
+      if (aPlaneIter.IsDisabled()
+      || !aPlane->NextPlaneInChain().IsNull())
       {
         continue;
       }
@@ -1007,6 +1037,7 @@ void OpenGl_ShaderManager::PushClippingState (const Handle(OpenGl_ShaderProgram)
   if (myClipPlaneArray.Size() < aNbClipPlanesMax)
   {
     myClipPlaneArray.Resize (0, aNbClipPlanesMax - 1, false);
+    myClipChainArray.Resize (0, aNbClipPlanesMax - 1, false);
   }
 
   Standard_Integer aPlaneId = 0;
@@ -1017,29 +1048,34 @@ void OpenGl_ShaderManager::PushClippingState (const Handle(OpenGl_ShaderProgram)
     {
       continue;
     }
-    else if (aPlaneId >= aNbClipPlanesMax)
+    else if (aPlaneId + aPlane->NbForwardUnionChains() > aNbClipPlanesMax)
     {
       myContext->PushMessage (GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_PORTABILITY, 0, GL_DEBUG_SEVERITY_MEDIUM,
                               TCollection_AsciiString("Warning: clipping planes limit (") + aNbClipPlanesMax + ") has been exceeded.");
       break;
     }
 
-    const Graphic3d_ClipPlane::Equation& anEquation = aPlane->GetEquation();
-    OpenGl_Vec4& aPlaneEq = myClipPlaneArray.ChangeValue (aPlaneId);
-    aPlaneEq.x() = float(anEquation.x());
-    aPlaneEq.y() = float(anEquation.y());
-    aPlaneEq.z() = float(anEquation.z());
-    aPlaneEq.w() = float(anEquation.w());
-    if (myHasLocalOrigin)
+    for (const Graphic3d_ClipPlane* aSubPlaneIter = aPlane.get(); aSubPlaneIter != NULL; aSubPlaneIter = aSubPlaneIter->NextPlaneInChain().get())
     {
-      const gp_XYZ        aPos = aPlane->ToPlane().Position().Location().XYZ() - myLocalOrigin;
-      const Standard_Real aD   = -(anEquation.x() * aPos.X() + anEquation.y() * aPos.Y() + anEquation.z() * aPos.Z());
-      aPlaneEq.w() = float(aD);
+      myClipChainArray.SetValue (aPlaneId, aSubPlaneIter->NbForwardUnionChains());
+      const Graphic3d_ClipPlane::Equation& anEquation = aSubPlaneIter->GetEquation();
+      OpenGl_Vec4& aPlaneEq = myClipPlaneArray.ChangeValue (aPlaneId);
+      aPlaneEq.x() = float(anEquation.x());
+      aPlaneEq.y() = float(anEquation.y());
+      aPlaneEq.z() = float(anEquation.z());
+      aPlaneEq.w() = float(anEquation.w());
+      if (myHasLocalOrigin)
+      {
+        const gp_XYZ        aPos = aSubPlaneIter->ToPlane().Position().Location().XYZ() - myLocalOrigin;
+        const Standard_Real aD   = -(anEquation.x() * aPos.X() + anEquation.y() * aPos.Y() + anEquation.z() * aPos.Z());
+        aPlaneEq.w() = float(aD);
+      }
+      ++aPlaneId;
     }
-    ++aPlaneId;
   }
 
   theProgram->SetUniform (myContext, aLocEquations, aNbClipPlanesMax, &myClipPlaneArray.First());
+  theProgram->SetUniform (myContext, theProgram->GetStateLocation (OpenGl_OCC_CLIP_PLANE_CHAINS), aNbClipPlanesMax, &myClipChainArray.First());
 }
 
 // =======================================================================
@@ -1532,12 +1568,16 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramUnlit (Handle(OpenGl_Sha
     else if ((theBits & OpenGl_PO_ClipPlanes2) != 0)
     {
       aNbClipPlanes = 2;
-      aSrcFragExtraMain += THE_FRAG_CLIP_PLANES_2;
+      aSrcFragExtraMain += (theBits & OpenGl_PO_ClipChains) != 0
+                         ? THE_FRAG_CLIP_CHAINS_2
+                         : THE_FRAG_CLIP_PLANES_2;
     }
     else
     {
       aNbClipPlanes = Graphic3d_ShaderProgram::THE_MAX_CLIP_PLANES_DEFAULT;
-      aSrcFragExtraMain += THE_FRAG_CLIP_PLANES_N;
+      aSrcFragExtraMain += (theBits & OpenGl_PO_ClipChains) != 0
+                          ? THE_FRAG_CLIP_CHAINS_N
+                          : THE_FRAG_CLIP_PLANES_N;
     }
   }
   if ((theBits & OpenGl_PO_WriteOit) != 0)
@@ -1895,12 +1935,16 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramGouraud (Handle(OpenGl_S
     else if ((theBits & OpenGl_PO_ClipPlanes2) != 0)
     {
       aNbClipPlanes = 2;
-      aSrcFragExtraMain += THE_FRAG_CLIP_PLANES_2;
+      aSrcFragExtraMain += (theBits & OpenGl_PO_ClipChains) != 0
+                          ? THE_FRAG_CLIP_CHAINS_2
+                          : THE_FRAG_CLIP_PLANES_2;
     }
     else
     {
       aNbClipPlanes = Graphic3d_ShaderProgram::THE_MAX_CLIP_PLANES_DEFAULT;
-      aSrcFragExtraMain += THE_FRAG_CLIP_PLANES_N;
+      aSrcFragExtraMain += (theBits & OpenGl_PO_ClipChains) != 0
+                         ? THE_FRAG_CLIP_CHAINS_N
+                         : THE_FRAG_CLIP_PLANES_N;
     }
   }
   if ((theBits & OpenGl_PO_WriteOit) != 0)
@@ -2054,12 +2098,16 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramPhong (Handle(OpenGl_Sha
     else if ((theBits & OpenGl_PO_ClipPlanes2) != 0)
     {
       aNbClipPlanes = 2;
-      aSrcFragExtraMain += THE_FRAG_CLIP_PLANES_2;
+      aSrcFragExtraMain += (theBits & OpenGl_PO_ClipChains) != 0
+                         ? THE_FRAG_CLIP_CHAINS_2
+                         : THE_FRAG_CLIP_PLANES_2;
     }
     else
     {
       aNbClipPlanes = Graphic3d_ShaderProgram::THE_MAX_CLIP_PLANES_DEFAULT;
-      aSrcFragExtraMain += THE_FRAG_CLIP_PLANES_N;
+      aSrcFragExtraMain += (theBits & OpenGl_PO_ClipChains) != 0
+                         ? THE_FRAG_CLIP_CHAINS_N
+                         : THE_FRAG_CLIP_PLANES_N;
     }
   }
   if ((theBits & OpenGl_PO_WriteOit) != 0)
