@@ -1304,9 +1304,9 @@ aLabel.FindAttribute (DENSITY, anAtt);
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.cpp}
     Handle(TDataStd_Integer) anInt = new TDataStd_Integer();
-    INT->SetID(aGuid);
+    anInt->SetID(aGuid);
     aLabel.Add(anInt);
-    INT->Set(aValue);
+    anInt->Set(aValue);
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     
