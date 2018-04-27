@@ -164,18 +164,22 @@ namespace
     const TopoDS_Vertex& myVertex;
   };
 
-  void ComputeErrFactors (Standard_Real theDeflection, const Handle (Adaptor3d_HSurface) & theFace, Standard_Real & theErrFactorU, Standard_Real & theErrFactorV)
+  void ComputeErrFactors (const Standard_Real               theDeflection, 
+                          const Handle(Adaptor3d_HSurface)& theFace,
+                          Standard_Real&                    theErrFactorU,
+                          Standard_Real&                    theErrFactorV)
   {
     theErrFactorU = theDeflection * 10.;
     theErrFactorV = theDeflection * 10.;
 
     switch (theFace->GetType ())
     {
-    case GeomAbs_Plane: theErrFactorU = theErrFactorV = 1.; break;
     case GeomAbs_Cylinder:
     case GeomAbs_Cone:
     case GeomAbs_Sphere:
-    case GeomAbs_Torus: break;
+    case GeomAbs_Torus:
+      break;
+
     case GeomAbs_SurfaceOfExtrusion:
     case GeomAbs_SurfaceOfRevolution:
       {
@@ -210,26 +214,39 @@ namespace
         }
         break;
       }
-    default: theErrFactorU = theErrFactorV = 1.;
+
+    case GeomAbs_Plane:
+    default:
+      theErrFactorU = theErrFactorV = 1.;
     }
   }
 
-  void AdjustCellsCounts (const Handle (Adaptor3d_HSurface) & theFace, Standard_Integer aNbVertices, Standard_Integer & theCellsCountU, Standard_Integer & theCellsCountV)
+  void AdjustCellsCounts (const Handle(Adaptor3d_HSurface)& theFace,
+                          const Standard_Integer            theNbVertices,
+                          Standard_Integer&                 theCellsCountU,
+                          Standard_Integer&                 theCellsCountV)
   {
-    GeomAbs_SurfaceType aType = theFace->GetType ();
+    const GeomAbs_SurfaceType aType = theFace->GetType ();
+    if (aType == GeomAbs_OtherSurface)
+    {
+      // fallback to the default behavior
+      theCellsCountU = theCellsCountV = -1;
+      return;
+    }
+
     if (aType == GeomAbs_Plane)
     {
-      theCellsCountU = theCellsCountV = (Standard_Integer)Ceiling (Pow (2, Log10 (aNbVertices)));
+      theCellsCountU = theCellsCountV = (Standard_Integer)Ceiling (Pow (2, Log10 (theNbVertices)));
     }
     else if (aType == GeomAbs_Cylinder || aType == GeomAbs_Cone)
     {
       if (!theFace->IsUPeriodic ())
       {
-        theCellsCountU = (Standard_Integer)Ceiling (Pow (2, Log10 (aNbVertices)));
+        theCellsCountU = (Standard_Integer)Ceiling (Pow (2, Log10 (theNbVertices)));
       }
       else
       {
-        theCellsCountV = (Standard_Integer)Ceiling (Pow (2, Log10 (aNbVertices)));
+        theCellsCountV = (Standard_Integer)Ceiling (Pow (2, Log10 (theNbVertices)));
       }
     }
     else if (aType == GeomAbs_SurfaceOfExtrusion || aType == GeomAbs_SurfaceOfRevolution)
@@ -237,35 +254,30 @@ namespace
       if (aType == GeomAbs_SurfaceOfExtrusion)
       {
         // U is always a line
-        theCellsCountU = (Standard_Integer)Ceiling (Pow (2, Log10 (aNbVertices)));
+        theCellsCountU = (Standard_Integer)Ceiling (Pow (2, Log10 (theNbVertices)));
       }
       
       Handle (Adaptor3d_HCurve) aCurve = theFace->BasisCurve ();
       if (aCurve->GetType () == GeomAbs_Line || (aCurve->GetType () == GeomAbs_BSplineCurve && aCurve->Degree () < 2))
       {
         // planar, cylindrical, conical cases
-        theCellsCountV = (Standard_Integer)Ceiling (Pow (2, Log10 (aNbVertices)));
+        theCellsCountV = (Standard_Integer)Ceiling (Pow (2, Log10 (theNbVertices)));
       }
     }
     else if (aType == GeomAbs_BezierSurface || aType == GeomAbs_BSplineSurface)
     {
       if (theFace->UDegree () < 2)
       {
-        theCellsCountU = (Standard_Integer)Ceiling (Pow (2, Log10 (aNbVertices)));
+        theCellsCountU = (Standard_Integer)Ceiling (Pow (2, Log10 (theNbVertices)));
       }
       if (theFace->VDegree () < 2)
       {
-        theCellsCountV = (Standard_Integer)Ceiling (Pow (2, Log10 (aNbVertices)));
+        theCellsCountV = (Standard_Integer)Ceiling (Pow (2, Log10 (theNbVertices)));
       }
     }
 
     theCellsCountU = Max (theCellsCountU, 2);
     theCellsCountV = Max (theCellsCountV, 2);
-    if (aType == GeomAbs_OtherSurface)
-    {
-      // fallback to the default behavior
-      theCellsCountU = theCellsCountV = -1;
-    }
   }
 }
 

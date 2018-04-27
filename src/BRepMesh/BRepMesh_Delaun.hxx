@@ -54,9 +54,9 @@ public:
 
   //! Creates the triangulation with an existant Mesh data structure.
   Standard_EXPORT BRepMesh_Delaun (const Handle (BRepMesh_DataStructureOfDelaun)& theOldMesh,
-                                   BRepMesh::Array1OfInteger&                    theVertexIndices,
-                                   Standard_Integer theCellsCountU,
-                                   Standard_Integer theCellsCountV);
+                                   BRepMesh::Array1OfInteger&                     theVertexIndices,
+                                   const Standard_Integer                         theCellsCountU,
+                                   const Standard_Integer                         theCellsCountV);
 
   //! Initializes the triangulation with an array of vertices.
   Standard_EXPORT void Init (BRepMesh::Array1OfVertexOfDelaun& theVertices);
@@ -151,10 +151,14 @@ private:
   BRepMesh::HMapOfInteger getEdgesByType (const BRepMesh_DegreeOfFreedom theEdgeType) const;
 
   //! Run triangulation procedure.
-  void perform (BRepMesh::Array1OfInteger& theVertexIndices, Standard_Integer theCellsCountU = -1, Standard_Integer theCellsCountV = -1);
+  void perform (BRepMesh::Array1OfInteger& theVertexIndices,
+                const Standard_Integer     theCellsCountU = -1,
+                const Standard_Integer     theCellsCountV = -1);
 
   //! Build the super mesh.
-  void superMesh (const Bnd_Box2d& theBox, Standard_Integer theCellsCountU, Standard_Integer theCellsCountV);
+  void superMesh (const Bnd_Box2d&       theBox,
+                  const Standard_Integer theCellsCountU,
+                  const Standard_Integer theCellsCountV);
 
   //! Computes the triangulation and adds the vertices,
   //! edges and triangles to the Mesh data structure.
