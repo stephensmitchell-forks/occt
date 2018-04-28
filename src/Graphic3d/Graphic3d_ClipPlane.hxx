@@ -127,6 +127,9 @@ public:
   //! @return geometrical definition of clipping plane
   const gp_Pln& ToPlane() const { return myPlane; }
 
+  //! Return TRUE if this item refers to more planes in a union chain.
+  Standard_Boolean IsChain() const { return !myNextInChain.IsNull(); }
+
   //! Return the previous plane in a Chain of Planes defining Union,
   //! or NULL if there is no chain or it is a first element in chain.
   //! When clipping is defined by a Chain of Planes,

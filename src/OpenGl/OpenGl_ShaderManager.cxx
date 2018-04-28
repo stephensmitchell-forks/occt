@@ -962,8 +962,9 @@ void OpenGl_ShaderManager::PushClippingState (const Handle(OpenGl_ShaderProgram)
     for (OpenGl_ClippingIterator aPlaneIter (myContext->Clipping()); aPlaneIter.More(); aPlaneIter.Next())
     {
       const Handle(Graphic3d_ClipPlane)& aPlane = aPlaneIter.Value();
-      if (aPlaneIter.IsDisabled()
-      || !aPlane->NextPlaneInChain().IsNull())
+      if (!aPlane->IsOn()
+        || aPlane->IsChain()
+        || myContext->Clipping().IsDisabled (aPlaneIter.PlaneIndex()))
       {
         continue;
       }
@@ -1044,19 +1045,26 @@ void OpenGl_ShaderManager::PushClippingState (const Handle(OpenGl_ShaderProgram)
   for (OpenGl_ClippingIterator aPlaneIter (myContext->Clipping()); aPlaneIter.More(); aPlaneIter.Next())
   {
     const Handle(Graphic3d_ClipPlane)& aPlane = aPlaneIter.Value();
-    if (aPlaneIter.IsDisabled())
+    if (!aPlane->IsOn())
     {
       continue;
     }
-    else if (aPlaneId + aPlane->NbForwardUnionChains() > aNbClipPlanesMax)
-    {
-      myContext->PushMessage (GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_PORTABILITY, 0, GL_DEBUG_SEVERITY_MEDIUM,
-                              TCollection_AsciiString("Warning: clipping planes limit (") + aNbClipPlanesMax + ") has been exceeded.");
-      break;
-    }
 
-    for (const Graphic3d_ClipPlane* aSubPlaneIter = aPlane.get(); aSubPlaneIter != NULL; aSubPlaneIter = aSubPlaneIter->NextPlaneInChain().get())
+    Standard_Integer aPlaneIndex = aPlaneIter.PlaneIndex();
+    for (const Graphic3d_ClipPlane* aSubPlaneIter = aPlane.get(); aSubPlaneIter != NULL; aSubPlaneIter = aSubPlaneIter->NextPlaneInChain().get(), ++aPlaneIndex)
     {
+      if (myContext->Clipping().IsDisabled (aPlaneIndex))
+      {
+        continue;
+      }
+      else if (aPlaneId >= aNbClipPlanesMax)
+      {
+        for (; aPlaneIter.More(); aPlaneIter.Next()) {}
+        myContext->PushMessage (GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_PORTABILITY, 0, GL_DEBUG_SEVERITY_MEDIUM,
+                                TCollection_AsciiString("Warning: clipping planes limit (") + aNbClipPlanesMax + ") has been exceeded.");
+        break;
+      }
+
       myClipChainArray.SetValue (aPlaneId, aSubPlaneIter->NbForwardUnionChains());
       const Graphic3d_ClipPlane::Equation& anEquation = aSubPlaneIter->GetEquation();
       OpenGl_Vec4& aPlaneEq = myClipPlaneArray.ChangeValue (aPlaneId);

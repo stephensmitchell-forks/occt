@@ -42,11 +42,9 @@ OpenGl_ClippingIterator::OpenGl_ClippingIterator (const OpenGl_Clipping& theClip
 // purpose  :
 // =======================================================================
 OpenGl_Clipping::OpenGl_Clipping()
-: myNbClipping (0),
-  myNbCapping  (0),
-  myNbChains   (0),
-  myNbDisabled (0)
-{}
+{
+  memset (myCounters, 0, sizeof(myCounters));
+}
 
 // =======================================================================
 // function : Init
@@ -56,11 +54,7 @@ void OpenGl_Clipping::Init()
 {
   myPlanesGlobal.Nullify();
   myPlanesLocal.Nullify();
-
-  myNbClipping = 0;
-  myNbCapping  = 0;
-  myNbChains   = 0;
-  myNbDisabled = 0;
+  memset (myCounters, 0, sizeof(myCounters));
 }
 
 // =======================================================================
@@ -78,7 +72,7 @@ void OpenGl_Clipping::Reset (const Handle(OpenGl_Context)& theGlCtx,
   myPlanesLocal.Nullify();
 
   add (theGlCtx, thePlanes, 1);
-  myNbDisabled = 0;
+  myCounters[Counter_Disabled] = 0;
 
   // Method ::add() implicitly extends myDisabledPlanes (NCollection_Vector::SetValue()),
   // however we do not reset myDisabledPlanes and mySkipFilter beforehand to avoid redundant memory re-allocations.
@@ -115,24 +109,20 @@ void OpenGl_Clipping::add (const Handle(OpenGl_Context)& ,
   }
 
   Standard_Integer aPlaneId = theStartIndex;
-  for (Graphic3d_SequenceOfHClipPlane::Iterator aPlaneIt (*thePlanes); aPlaneIt.More(); aPlaneIt.Next(), ++aPlaneId)
+  for (Graphic3d_SequenceOfHClipPlane::Iterator aPlaneIt (*thePlanes); aPlaneIt.More(); aPlaneIt.Next())
   {
     const Handle(Graphic3d_ClipPlane)& aPlane = aPlaneIt.Value();
-    myDisabledPlanes.SetValue (aPlaneId, Standard_False); // automatically resizes the vector
-    if (!aPlane->IsOn())
+    if (aPlane->IsOn() && aPlane->IsChain())
     {
-      continue;
+      ++myCounters[Counter_EnabledChains];
     }
-
-    const Standard_Integer aNbSubPlanes = aPlane->NbForwardUnionChains();
-    myNbChains += 1;
-    if (aPlane->IsCapping())
+    for (const Graphic3d_ClipPlane* aSubPlaneIter = aPlane.get(); aSubPlaneIter != NULL; aSubPlaneIter = aSubPlaneIter->NextPlaneInChain().get(), ++aPlaneId)
     {
-      myNbCapping += aNbSubPlanes;
-    }
-    else
-    {
-      myNbClipping += aNbSubPlanes;
+      myDisabledPlanes.SetValue (aPlaneId, Standard_False); // automatically resizes the vector
+      if (aPlane->IsOn())
+      {
+        ++myCounters[aSubPlaneIter->IsCapping() ? Counter_EnabledCapping : Counter_EnabledClipping];
+      }
     }
   }
 }
@@ -151,24 +141,27 @@ void OpenGl_Clipping::remove (const Handle(OpenGl_Context)& ,
   }
 
   Standard_Integer aPlaneIndex = theStartIndex;
-  for (Graphic3d_SequenceOfHClipPlane::Iterator aPlaneIt (*thePlanes); aPlaneIt.More(); aPlaneIt.Next(), ++aPlaneIndex)
+  for (Graphic3d_SequenceOfHClipPlane::Iterator aPlaneIt (*thePlanes); aPlaneIt.More(); aPlaneIt.Next())
   {
     const Handle(Graphic3d_ClipPlane)& aPlane = aPlaneIt.Value();
-    if (!aPlane->IsOn()
-     || myDisabledPlanes.Value (aPlaneIndex))
+    if (!aPlane->IsOn())
     {
+      aPlaneIndex += aPlane->NbForwardUnionChains();
       continue;
     }
 
-    const Standard_Integer aNbSubPlanes = aPlane->NbForwardUnionChains();
-    myNbChains -= 1;
-    if (aPlane->IsCapping())
+    bool hasSubEnabled = false;
+    for (const Graphic3d_ClipPlane* aSubPlaneIter = aPlane.get(); aSubPlaneIter != NULL; aSubPlaneIter = aSubPlaneIter->NextPlaneInChain().get(), ++aPlaneIndex)
     {
-      myNbCapping -= aNbSubPlanes;
+      if (!myDisabledPlanes.Value (aPlaneIndex))
+      {
+        hasSubEnabled = true;
+        --myCounters[aSubPlaneIter->IsCapping() ? Counter_EnabledCapping : Counter_EnabledClipping];
+      }
     }
-    else
+    if (hasSubEnabled && aPlane->IsChain())
     {
-      myNbClipping -= aNbSubPlanes;
+      --myCounters[Counter_EnabledChains];
     }
   }
 }
@@ -179,27 +172,60 @@ void OpenGl_Clipping::remove (const Handle(OpenGl_Context)& ,
 // =======================================================================
 Standard_Boolean OpenGl_Clipping::SetEnabled (const Handle(OpenGl_Context)&  ,
                                               const OpenGl_ClippingIterator& thePlane,
+                                              const Standard_Integer         theSubPlane,
                                               const Standard_Boolean         theIsEnabled)
 {
-  const Standard_Integer aPlaneIndex = thePlane.PlaneIndex();
-  Standard_Boolean& isDisabled = myDisabledPlanes.ChangeValue (aPlaneIndex);
-  if (isDisabled == !theIsEnabled)
+  Standard_Integer aPlaneIndex = thePlane.PlaneIndex();
+  const Standard_Integer aTargetPlaneIndex = thePlane.PlaneIndex() + theSubPlane;
+  Standard_Integer aNbDisabled = 0;
+  bool hasChanged = false;
+  for (const Graphic3d_ClipPlane* aSubPlaneIter = thePlane.Value().get(); aSubPlaneIter != NULL; aSubPlaneIter = aSubPlaneIter->NextPlaneInChain().get(), ++aPlaneIndex)
+  {
+    Standard_Boolean& isDisabled = myDisabledPlanes.ChangeValue (aPlaneIndex);
+    if (theSubPlane != -1)
+    {
+      if (aPlaneIndex != aTargetPlaneIndex)
+      {
+        if (isDisabled)
+        {
+          ++aNbDisabled;
+        }
+        continue;
+      }
+    }
+
+    if (!theIsEnabled)
+    {
+      ++aNbDisabled;
+    }
+    if (isDisabled == !theIsEnabled)
+    {
+      continue;
+    }
+
+    hasChanged = true;
+    isDisabled = !theIsEnabled;
+    const Standard_Integer aNbSubPlanes = thePlane.Value()->NbForwardUnionChains();
+
+    myCounters[aSubPlaneIter->IsCapping() ? Counter_EnabledCapping : Counter_EnabledClipping] += (theIsEnabled ? 1 : -1);
+    myCounters[Counter_Disabled] += (theIsEnabled ? -1 : 1);
+  }
+  if (!hasChanged)
   {
     return Standard_False;
   }
 
-  isDisabled = !theIsEnabled;
-  const Standard_Integer aNbSubPlanes = thePlane.Value()->NbForwardUnionChains();
-  if (thePlane.Value()->IsCapping())
+  if (thePlane.Value()->IsChain())
   {
-    myNbCapping += (theIsEnabled ? aNbSubPlanes : -aNbSubPlanes);
+    if (aNbDisabled == thePlane.Value()->NbForwardUnionChains())
+    {
+      --myCounters[Counter_EnabledChains];
+    }
+    else if (aNbDisabled == 0)
+    {
+      ++myCounters[Counter_EnabledChains];
+    }
   }
-  else
-  {
-    myNbClipping += (theIsEnabled ? aNbSubPlanes : -aNbSubPlanes);
-  }
-  myNbChains   += (theIsEnabled ? 1 : -1);
-  myNbDisabled += (theIsEnabled ? -aNbSubPlanes : aNbSubPlanes);
   return Standard_True;
 }
 
@@ -209,31 +235,32 @@ Standard_Boolean OpenGl_Clipping::SetEnabled (const Handle(OpenGl_Context)&  ,
 // =======================================================================
 void OpenGl_Clipping::RestoreDisabled (const Handle(OpenGl_Context)& )
 {
-  if (myNbDisabled == 0)
+  if (myCounters[Counter_Disabled] == 0)
   {
     return;
   }
 
-  myNbDisabled = 0;
+  myCounters[Counter_Disabled] = 0;
   for (OpenGl_ClippingIterator aPlaneIter (*this); aPlaneIter.More(); aPlaneIter.Next())
   {
-    Standard_Boolean& isDisabled = myDisabledPlanes.ChangeValue (aPlaneIter.PlaneIndex());
-    if (!isDisabled)
+    Standard_Integer aPlaneIndex = aPlaneIter.PlaneIndex();
+    bool wasSomeEnabled = false;
+    for (const Graphic3d_ClipPlane* aSubPlaneIter = aPlaneIter.Value().get(); aSubPlaneIter != NULL; aSubPlaneIter = aSubPlaneIter->NextPlaneInChain().get(), ++aPlaneIndex)
     {
-      continue;
-    }
+      Standard_Boolean& isDisabled = myDisabledPlanes.ChangeValue (aPlaneIndex);
+      if (!isDisabled)
+      {
+        wasSomeEnabled = true;
+        continue;
+      }
 
-    isDisabled = Standard_False;
-    const Handle(Graphic3d_ClipPlane)& aPlane = aPlaneIter.Value();
-    const Standard_Integer aNbSubPlanes = aPlane->NbForwardUnionChains();
-    myNbChains += 1;
-    if (aPlane->IsCapping())
-    {
-      myNbCapping += aNbSubPlanes;
+      isDisabled = Standard_False;
+      ++myCounters[aSubPlaneIter->IsCapping() ? Counter_EnabledCapping : Counter_EnabledClipping];
     }
-    else
+    if (!wasSomeEnabled
+      && aPlaneIter.Value()->IsChain())
     {
-      myNbClipping += aNbSubPlanes;
+      ++myCounters[Counter_EnabledChains];
     }
   }
 }
@@ -252,7 +279,7 @@ void OpenGl_Clipping::DisableGlobal (const Handle(OpenGl_Context)& theGlCtx)
       return;
     }
 
-    SetEnabled (theGlCtx, aPlaneIter, Standard_False);
+    SetEnabled (theGlCtx, aPlaneIter, -1, Standard_False);
   }
 }
 
@@ -261,19 +288,25 @@ void OpenGl_Clipping::DisableGlobal (const Handle(OpenGl_Context)& theGlCtx)
 // purpose  :
 // =======================================================================
 void OpenGl_Clipping::DisableAllExcept (const Handle(OpenGl_Context)&  theGlCtx,
-                                        const OpenGl_ClippingIterator& thePlane)
+                                        const OpenGl_ClippingIterator& thePlane,
+                                        const Standard_Integer         theSubPlane)
 {
+  const Standard_Integer aTargetPlaneIndex = thePlane.PlaneIndex() + theSubPlane;
   for (OpenGl_ClippingIterator aPlaneIter (*this); aPlaneIter.More(); aPlaneIter.Next())
   {
-    if (aPlaneIter.IsDisabled())
+    Standard_Integer aPlaneIndex = aPlaneIter.PlaneIndex();
+    for (const Graphic3d_ClipPlane* aSubPlaneIter = aPlaneIter.Value().get(); aSubPlaneIter != NULL; aSubPlaneIter = aSubPlaneIter->NextPlaneInChain().get(), ++aPlaneIndex)
     {
-      mySkipFilter.SetValue (aPlaneIter.PlaneIndex(), Standard_True);
-      continue;
-    }
+      if (myDisabledPlanes.Value (aPlaneIndex) || !aPlaneIter.Value()->IsOn())
+      {
+        mySkipFilter.SetValue (aPlaneIndex, Standard_True);
+        continue;
+      }
 
-    const Standard_Boolean isOn = (aPlaneIter.PlaneIndex() == thePlane.PlaneIndex());
-    SetEnabled (theGlCtx, aPlaneIter, isOn);
-    mySkipFilter.SetValue (aPlaneIter.PlaneIndex(), Standard_False);
+      const Standard_Boolean isOn = (aPlaneIndex == aTargetPlaneIndex);
+      SetEnabled (theGlCtx, aPlaneIter, aPlaneIndex - aPlaneIter.PlaneIndex(), isOn);
+      mySkipFilter.SetValue (aPlaneIndex, Standard_False);
+    }
   }
 }
 
@@ -282,16 +315,22 @@ void OpenGl_Clipping::DisableAllExcept (const Handle(OpenGl_Context)&  theGlCtx,
 // purpose  :
 // =======================================================================
 void OpenGl_Clipping::EnableAllExcept (const Handle(OpenGl_Context)&  theGlCtx,
-                                       const OpenGl_ClippingIterator& thePlane)
+                                       const OpenGl_ClippingIterator& thePlane,
+                                       const Standard_Integer         theSubPlane)
 {
+  const Standard_Integer aTargetPlaneIndex = thePlane.PlaneIndex() + theSubPlane;
   for (OpenGl_ClippingIterator aPlaneIter (*this); aPlaneIter.More(); aPlaneIter.Next())
   {
-    if (mySkipFilter.Value (aPlaneIter.PlaneIndex()))
+    Standard_Integer aPlaneIndex = aPlaneIter.PlaneIndex();
+    for (const Graphic3d_ClipPlane* aSubPlaneIter = aPlaneIter.Value().get(); aSubPlaneIter != NULL; aSubPlaneIter = aSubPlaneIter->NextPlaneInChain().get(), ++aPlaneIndex)
     {
-      continue;
-    }
+      if (mySkipFilter.Value (aPlaneIndex))
+      {
+        continue;
+      }
 
-    const Standard_Boolean isOn = (aPlaneIter.PlaneIndex() != thePlane.PlaneIndex());
-    SetEnabled (theGlCtx, aPlaneIter, isOn);
+      const Standard_Boolean isOn = (aPlaneIndex != aTargetPlaneIndex);
+      SetEnabled (theGlCtx, aPlaneIter, aPlaneIndex - aPlaneIter.PlaneIndex(), isOn);
+    }
   }
 }

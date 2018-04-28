@@ -8319,7 +8319,8 @@ static int VClipPlane (Draw_Interpretor& theDi, Standard_Integer theArgsNb, cons
       anArgIter += 4;
     }
     else if ((aChangeArg.StartsWith ("-boxinterior")
-           || aChangeArg.StartsWith ("-boxint"))
+           || aChangeArg.StartsWith ("-boxint")
+           || aChangeArg.StartsWith ("-box"))
             && aNbChangeArgs >= 7)
     {
       Graphic3d_BndBox3d aBndBox;

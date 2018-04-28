@@ -684,7 +684,7 @@ void SelectMgr_RectangularFrustum::computeClippingRange (const Graphic3d_Sequenc
       // change depth limits for case of opposite and directed planes
       const gp_Pnt anIntersectionPnt = myNearPickedPnt.XYZ() + myViewRayDir.XYZ() * aParam;
       const Standard_Real aDistToPln = anIntersectionPnt.Distance (myNearPickedPnt);
-      if (aClipPlane->NextPlaneInChain().IsNull())
+      if (!aClipPlane->IsChain())
       {
         if (aDotProduct < 0.0)
         {
@@ -709,7 +709,7 @@ void SelectMgr_RectangularFrustum::computeClippingRange (const Graphic3d_Sequenc
     }
 
     if (!aSubRange.IsVoid()
-     && !aClipPlane->NextPlaneInChain().IsNull())
+      && aClipPlane->IsChain())
     {
       theRange.AddSubRange (aSubRange);
     }

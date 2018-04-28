@@ -617,7 +617,7 @@ void OpenGl_Structure::Render (const Handle(OpenGl_Workspace) &theWorkspace) con
         }
         else if (aBoxState == Graphic3d_ClipState_In)
         {
-          aCtx->ChangeClipping().SetEnabled (aCtx, aPlaneIt, Standard_False);
+          aCtx->ChangeClipping().SetEnabled (aCtx, aPlaneIt, -1, Standard_False);
           hasDisabled = true;
         }
       }

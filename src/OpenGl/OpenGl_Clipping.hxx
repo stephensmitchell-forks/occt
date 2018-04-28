@@ -31,6 +31,14 @@ class OpenGl_ClippingIterator;
 class OpenGl_Clipping
 {
   friend class OpenGl_ClippingIterator;
+  enum
+  {
+    Counter_Disabled        = 0, //!< number of disabled clipping or capping planes
+    Counter_EnabledClipping = 1, //!< number of enabled clipping-only planes (NOT capping)
+    Counter_EnabledCapping  = 2, //!< number of enabled capping  planes
+    Counter_EnabledChains   = 3, //!< number of enabled chains
+  };
+  enum { CounterNB = Counter_EnabledChains + 1 };
 public: //! @name general methods
 
   //! Default constructor.
@@ -49,28 +57,29 @@ public: //! @name general methods
                                        const Handle(Graphic3d_SequenceOfHClipPlane)& thePlanes);
 
   //! @return true if there are enabled clipping planes (NOT capping)
-  Standard_Boolean IsClippingOn() const { return myNbClipping > 0; }
+  Standard_Boolean IsClippingOn() const { return myCounters[Counter_EnabledClipping] > 0; }
 
   //! @return true if there are enabled capping planes
-  Standard_Boolean IsCappingOn() const { return myNbCapping > 0; }
+  Standard_Boolean IsCappingOn() const { return myCounters[Counter_EnabledCapping] > 0; }
 
   //! @return true if there are enabled clipping or capping planes
-  Standard_Boolean IsClippingOrCappingOn() const { return (myNbClipping + myNbCapping) > 0; }
+  Standard_Boolean IsClippingOrCappingOn() const { return (myCounters[Counter_EnabledClipping] + myCounters[Counter_EnabledCapping]) > 0; }
 
   //! @return number of enabled clipping + capping planes
-  Standard_Integer NbClippingOrCappingOn() const { return myNbClipping + myNbCapping; }
+  Standard_Integer NbClippingOrCappingOn() const { return myCounters[Counter_EnabledClipping] + myCounters[Counter_EnabledCapping]; }
 
   //! Return TRUE if there are clipping chains in the list (defining more than 1 sub-plane)
-  Standard_Boolean HasClippingChains() const { return myNbChains != (myNbClipping + myNbCapping); }
+  Standard_Boolean HasClippingChains() const { return myCounters[Counter_EnabledChains] > 0; }
 
 public: //! @name advanced method for disabling defined planes
 
   //! Return true if some clipping planes have been temporarily disabled.
-  Standard_Boolean HasDisabled() const { return myNbDisabled > 0; }
+  Standard_Boolean HasDisabled() const { return myCounters[Counter_Disabled] > 0; }
 
   //! Disable plane temporarily.
   Standard_EXPORT Standard_Boolean SetEnabled (const Handle(OpenGl_Context)&  theGlCtx,
                                                const OpenGl_ClippingIterator& thePlane,
+                                               const Standard_Integer         theSubPlane,
                                                const Standard_Boolean         theIsEnabled);
 
   //! Temporarily disable all planes from the global (view) list, keep only local (object) list.
@@ -83,12 +92,17 @@ public: //! @name advanced method for disabling defined planes
   //! Temporarily disable all planes except specified one.
   //! Does not affect already disabled planes.
   Standard_EXPORT void DisableAllExcept (const Handle(OpenGl_Context)&  theGlCtx,
-                                         const OpenGl_ClippingIterator& thePlane);
+                                         const OpenGl_ClippingIterator& thePlane,
+                                         const Standard_Integer         theSubPlane);
 
   //! Enable back planes disabled by ::DisableAllExcept().
   //! Keeps only specified plane enabled.
   Standard_EXPORT void EnableAllExcept (const Handle(OpenGl_Context)&  theGlCtx,
-                                        const OpenGl_ClippingIterator& thePlane);
+                                        const OpenGl_ClippingIterator& thePlane,
+                                        const Standard_Integer         theSubPlane);
+
+  //! Return true if plane has been temporarily disabled.
+  bool IsDisabled (Standard_Integer thePlaneIndex) const { return myDisabledPlanes.Value (thePlaneIndex); }
 
 protected: //! @name clipping state modification commands
 
@@ -121,10 +135,7 @@ private:
   Handle(Graphic3d_SequenceOfHClipPlane)   myPlanesLocal;    //!< object clipping planes
   NCollection_Vector<Standard_Boolean>     myDisabledPlanes; //!< ids of disabled planes
   NCollection_Vector<Standard_Boolean>     mySkipFilter;     //!< ids of planes that were disabled before calling ::DisableAllExcept()
-  Standard_Integer                         myNbClipping;     //!< number of enabled clipping-only planes (NOT capping)
-  Standard_Integer                         myNbCapping;      //!< number of enabled capping  planes
-  Standard_Integer                         myNbChains;       //!< number of enabled chains
-  Standard_Integer                         myNbDisabled;     //!< number of defined but disabled planes
+  Standard_Integer                         myCounters[CounterNB]; //!< number of enabled/disabled elements
 
 private:
   //! Copying allowed only within Handles
@@ -146,20 +157,21 @@ public:
   //! Go to the next clipping plane.
   void Next()
   {
-    ++myCurrIndex;
     if (myIter1.More())
     {
+      myCurrIndex += myIter1.Value()->NbForwardUnionChains();
       myIter1.Next();
     }
     else
     {
+      myCurrIndex += myIter2.Value()->NbForwardUnionChains();
       myIter2.Next();
     }
   }
 
   //! Return true if plane has been temporarily disabled
   //! either by Graphic3d_ClipPlane->IsOn() property or by temporary filter.
-  bool IsDisabled() const { return myDisabled->Value (myCurrIndex) || !Value()->IsOn(); }
+  ///bool IsDisabled() const { return myDisabled->Value (myCurrIndex) || !Value()->IsOn(); }
 
   //! Return the plane at current iterator position.
   const Handle(Graphic3d_ClipPlane)& Value() const
