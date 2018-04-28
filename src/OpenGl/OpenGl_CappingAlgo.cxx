@@ -42,10 +42,37 @@ namespace
 
     // set identity model matrix
     aContext->ModelWorldState.Push();
-    aContext->ModelWorldState.SetCurrent (OpenGl_Mat4::Map (*thePlane->Orientation()->mat));
-    aContext->ApplyModelViewMatrix();
+    for (const Graphic3d_ClipPlane* aSubPlaneIter = thePlane->Plane().get(); aSubPlaneIter != NULL; aSubPlaneIter = aSubPlaneIter->NextPlaneInChain().get())
+    {
+      if (thePlane->Plane() != aSubPlaneIter)
+      {
+        const TCollection_AsciiString& aResId = aSubPlaneIter->GetId();
+        Handle(OpenGl_CappingPlaneResource) aPlaneRes;
+        if (!aContext->GetResource (aResId, aPlaneRes))
+        {
+          // share and register for release once the resource is no longer used
+          aPlaneRes = new OpenGl_CappingPlaneResource (aSubPlaneIter);
+          aContext->ShareResource (aResId, aPlaneRes);
+        }
 
-    thePlane->Primitives().Render (theWorkspace);
+        aPlaneRes->Update (aContext, theAspectFace != NULL ? theAspectFace->Aspect() : Handle(Graphic3d_AspectFillArea3d)());
+        aContext->ModelWorldState.SetCurrent (OpenGl_Mat4::Map (*aPlaneRes->Orientation()->mat));
+        aContext->ApplyModelViewMatrix();
+
+        thePlane->Primitives().Render (theWorkspace);
+
+        // set delayed resource release
+        aPlaneRes.Nullify();
+        aContext->ReleaseResource (aResId, Standard_True);
+      }
+      else
+      {
+        aContext->ModelWorldState.SetCurrent (OpenGl_Mat4::Map (*thePlane->Orientation()->mat));
+        aContext->ApplyModelViewMatrix();
+
+        thePlane->Primitives().Render (theWorkspace);
+      }
+    }
 
     aContext->ModelWorldState.Pop();
     aContext->ApplyModelViewMatrix();
